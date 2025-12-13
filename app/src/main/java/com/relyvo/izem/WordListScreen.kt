@@ -17,14 +17,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.media.MediaPlayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.clickable
 import com.relyvo.izem.model.Word
 
 @Composable
 fun WordItem(word: Word) {
+    val context = LocalContext.current
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable {
+                word.audioRes?.let { soundId ->
+                    val mediaPlayer = MediaPlayer.create(context, soundId)
+                    mediaPlayer.start()
+
+                    mediaPlayer.setOnCompletionListener { mp ->
+                        mp.release()
+                    }
+                }
+            },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
