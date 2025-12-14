@@ -27,12 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             IzemTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    WordList(
-                        wordList = DataSource.words,
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainScreen()
             }
         }
     }
