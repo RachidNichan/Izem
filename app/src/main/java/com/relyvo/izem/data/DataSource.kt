@@ -19,14 +19,14 @@ object DataSource {
             tamazight = "Tanmmirt",
             tifinagh = "ⵜⴰⵏⵎⵎⵉⵔⵜ",
             audioRes = R.raw.tanmmirt,
-            imageRes = null
+            imageRes = R.drawable.thank_you
         ),
         Word(
             id = "3",
             english = "Water",
             tamazight = "Aman",
             tifinagh = "ⴰⵎⴰⵏ",
-            audioRes = null,
+            audioRes = R.raw.aman,
             imageRes = R.drawable.water
         ),
         Word(
@@ -34,7 +34,7 @@ object DataSource {
             english = "Bread",
             tamazight = "Aghrom",
             tifinagh = "ⴰⵖⵔⵓⵎ",
-            audioRes = null,
+            audioRes = R.raw.aghrom,
             imageRes = R.drawable.bread
         ),
         Word(
@@ -42,16 +42,16 @@ object DataSource {
             english = "Man",
             tamazight = "Argaz",
             tifinagh = "ⴰⵔⴳⴰⵣ",
-            audioRes = null,
-            imageRes = null
+            audioRes = R.raw.argaz,
+            imageRes = R.drawable.man
         ),
         Word(
             id = "6",
             english = "Woman",
             tamazight = "Tamghart",
             tifinagh = "ⵜⴰⵎⵖⴰⵔⵜ",
-            audioRes = null,
-            imageRes = null
+            audioRes = R.raw.tamghart,
+            imageRes = R.drawable.woman
         )
     )
 }
