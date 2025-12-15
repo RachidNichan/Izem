@@ -39,11 +39,11 @@ fun QuizScreen() {
 
     val context = LocalContext.current
 
-    var currentWord by remember { mutableStateOf(DataSource.words.random()) }
+    var currentWord by remember { mutableStateOf(DataSource.allWords.random()) }
 
     var options by remember(currentWord) {
         mutableStateOf(
-            (listOf(currentWord) + DataSource.words.filter { it != currentWord }.shuffled().take(3))
+            (listOf(currentWord) + DataSource.allWords.filter { it != currentWord }.shuffled().take(3))
                 .shuffled()
         )
     }
@@ -131,8 +131,7 @@ fun QuizScreen() {
         if (selectedAnswer != null) {
             Button(
                 onClick = {
-                    // هنا فقط نعيد تعيين اللعبة (Reset)
-                    currentWord = DataSource.words.random()
+                    currentWord = DataSource.allWords.random()
                     selectedAnswer = null
                     isCorrect = false
                 },

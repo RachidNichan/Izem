@@ -21,7 +21,7 @@ import com.relyvo.izem.data.DataSource
 fun MainScreen() {
     val navController = rememberNavController()
 
-    val screens = listOf(Screen.Home, Screen.Quiz)
+    val bottomNavItems = listOf(Screen.Categories, Screen.Quiz)
 
     Scaffold(
         bottomBar = {
@@ -29,9 +29,9 @@ fun MainScreen() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentDestination = navBackStackEntry?.destination
 
-                screens.forEach { screen ->
+                bottomNavItems.forEach { screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = null) },
+                        icon = { Icon(screen.icon!!, contentDescription = null) },
                         label = { Text(screen.title) },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
@@ -50,11 +50,23 @@ fun MainScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Categories.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
-                WordList(wordList = DataSource.words)
+            composable(Screen.Categories.route) {
+                CategoryScreen(
+                    onCategoryClick = { categoryId ->
+                        navController.navigate("word_list/$categoryId")
+                    }
+                )
+            }
+
+            composable("word_list/{categoryId}") { backStackEntry ->
+                val categoryId = backStackEntry.arguments?.getString("categoryId")
+
+                val words = DataSource.getWordsByCategory(categoryId ?: "")
+
+                WordList(wordList = words)
             }
 
             composable(Screen.Quiz.route) {
