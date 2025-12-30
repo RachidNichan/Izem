@@ -1,27 +1,23 @@
 package com.relyvo.izem
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,17 +27,45 @@ import com.relyvo.izem.model.Category
 
 @Composable
 fun CategoryScreen(onCategoryClick: (String) -> Unit) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "Categories",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Azul! \uD83E\uDD81",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            Row {
+                IconButton(onClick = { sendFeedback(context) }) {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Feedback",
+                        tint = MaterialTheme.colorScheme.secondary
+                    )
+                }
+
+                IconButton(onClick = { shareApp(context) }) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share App",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -84,5 +108,28 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+}
+
+fun shareApp(context: Context) {
+    val appPackageName = context.packageName
+    val sendIntent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, "Azul! I'm learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=$appPackageName")
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, "Share Izem via")
+    context.startActivity(shareIntent)
+}
+
+fun sendFeedback(context: Context) {
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:")
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("rachid@relyvo.com"))
+        putExtra(Intent.EXTRA_SUBJECT, "Izem App Feedback")
+    }
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
     }
 }

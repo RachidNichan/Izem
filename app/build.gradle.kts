@@ -11,8 +11,8 @@ android {
         applicationId = "com.relyvo.izem"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -51,6 +51,7 @@ android {
 
 dependencies {
 
+    implementation(libs.play.review)
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.core.ktx)

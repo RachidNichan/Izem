@@ -64,9 +64,12 @@ fun MainScreen() {
             composable("word_list/{categoryId}") { backStackEntry ->
                 val categoryId = backStackEntry.arguments?.getString("categoryId")
 
-                val words = DataSource.getWordsByCategory(categoryId ?: "")
-
-                WordList(wordList = words)
+                if (categoryId == "alphabet") {
+                    AlphabetScreen(letters = DataSource.alphabetList)
+                } else {
+                    val words = DataSource.getWordsByCategory(categoryId ?: "")
+                    WordList(wordList = words)
+                }
             }
 
             composable(Screen.Quiz.route) {
