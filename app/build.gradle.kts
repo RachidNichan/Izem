@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -11,8 +12,8 @@ android {
         applicationId = "com.relyvo.izem"
         minSdk = 24
         targetSdk = 35
-        versionCode = 5
-        versionName = "2.0.1"
+        versionCode = 6
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -51,6 +52,9 @@ android {
 
 dependencies {
 
+    implementation(libs.google.ads)
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation(libs.firebase.firestore)
     implementation(libs.play.review)
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.core:core-splashscreen:1.0.1")
@@ -62,6 +66,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.firebase.analytics)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

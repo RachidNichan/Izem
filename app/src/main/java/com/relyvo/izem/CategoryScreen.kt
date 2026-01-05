@@ -26,7 +26,12 @@ import com.relyvo.izem.data.DataSource
 import com.relyvo.izem.model.Category
 
 @Composable
-fun CategoryScreen(onCategoryClick: (String) -> Unit) {
+fun CategoryScreen(
+    categoriesList: List<Category>,
+    isArabic: Boolean,
+    onCategoryClick: (String) -> Unit,
+    onLanguageToggle: () -> Unit
+) {
     val context = LocalContext.current
 
     Column(
@@ -41,14 +46,29 @@ fun CategoryScreen(onCategoryClick: (String) -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Azul! \uD83E\uDD81",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (isArabic) "أزول" else "Azul!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "\uD83E\uDD81",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
 
             Row {
+                TextButton(onClick = { onLanguageToggle() }) {
+                    Text(
+                        text = if (isArabic) "EN" else "AR",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
                 IconButton(onClick = { sendFeedback(context) }) {
                     Icon(
                         imageVector = Icons.Default.Email,
@@ -73,15 +93,22 @@ fun CategoryScreen(onCategoryClick: (String) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(DataSource.categories) { category ->
-                CategoryItem(category = category, onClick = { onCategoryClick(category.id) })
+            items(categoriesList) { category ->
+                CategoryItem(
+                    category = category,
+                    isArabic = isArabic,
+                    onClick = { onCategoryClick(category.id) }
+                )
             }
         }
     }
 }
 
 @Composable
-fun CategoryItem(category: Category, onClick: () -> Unit) {
+fun CategoryItem(category: Category, isArabic: Boolean, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val iconId = Utils.getDrawableId(context, category.iconName)
+
     Card(
         modifier = Modifier
             .fillMaxSize()
@@ -95,15 +122,17 @@ fun CategoryItem(category: Category, onClick: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = category.iconRes),
-                contentDescription = category.title,
-                modifier = Modifier.size(64.dp),
-                contentScale = ContentScale.Fit
-            )
+            if (iconId != 0) {
+                Image(
+                    painter = painterResource(id = iconId),
+                    contentDescription = category.titleEn,
+                    modifier = Modifier.size(64.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = category.title,
+                text = if (isArabic) category.titleAr else category.titleEn,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Medium
             )

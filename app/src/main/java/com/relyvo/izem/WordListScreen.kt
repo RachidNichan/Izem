@@ -31,21 +31,21 @@ import androidx.compose.foundation.clickable
 import com.relyvo.izem.model.Word
 
 @Composable
-fun WordItem(word: Word) {
+fun WordItem(word: Word, isArabic: Boolean) {
     val context = LocalContext.current
+
+    val imageId = Utils.getDrawableId(context, word.imageName)
+    val soundId = Utils.getAudioId(context, word.audioName)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
             .clickable {
-                word.audioRes?.let { soundId ->
+                if (soundId != 0) {
                     val mediaPlayer = MediaPlayer.create(context, soundId)
                     mediaPlayer.start()
-
-                    mediaPlayer.setOnCompletionListener { mp ->
-                        mp.release()
-                    }
+                    mediaPlayer.setOnCompletionListener { mp -> mp.release() }
                 }
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -57,9 +57,9 @@ fun WordItem(word: Word) {
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (word.imageRes != null) {
+            if (imageId != 0) {
                 Image(
-                    painter = painterResource(id = word.imageRes),
+                    painter = painterResource(id = imageId),
                     contentDescription = word.english,
                     modifier = Modifier
                         .size(60.dp)
@@ -83,7 +83,7 @@ fun WordItem(word: Word) {
             }
 
             Text(
-                text = word.english,
+                text = if (isArabic) word.arabic else word.english,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
@@ -92,10 +92,14 @@ fun WordItem(word: Word) {
 }
 
 @Composable
-fun WordList(wordList: List<Word>, modifier: Modifier = Modifier) {
+fun WordList(
+    wordList: List<Word>,
+    isArabic: Boolean,
+    modifier: Modifier = Modifier
+) {
     LazyColumn(modifier = modifier) {
         items(wordList) { currentWord ->
-            WordItem(word = currentWord)
+            WordItem(word = currentWord, isArabic = isArabic)
         }
     }
 }

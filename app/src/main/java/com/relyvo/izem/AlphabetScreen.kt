@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -25,7 +24,10 @@ import androidx.compose.ui.unit.sp
 import com.relyvo.izem.model.Word
 
 @Composable
-fun AlphabetScreen(letters: List<Word>) {
+fun AlphabetScreen(
+    letters: List<Word>,
+    isArabic: Boolean
+) {
     val context = LocalContext.current
 
     LazyVerticalGrid(
@@ -36,19 +38,29 @@ fun AlphabetScreen(letters: List<Word>) {
         modifier = Modifier.fillMaxSize()
     ) {
         items(letters) { letter ->
-            AlphabetItem(letter = letter, onPlaySound = {
-                letter.audioRes?.let { soundId ->
-                    val mediaPlayer = MediaPlayer.create(context, soundId)
-                    mediaPlayer.start()
-                    mediaPlayer.setOnCompletionListener { mp -> mp.release() }
+            AlphabetItem(
+                letter = letter,
+                isArabic = isArabic,
+                onPlaySound = {
+                    val soundId = Utils.getAudioId(context, letter.audioName)
+
+                    if (soundId != 0) {
+                        val mediaPlayer = MediaPlayer.create(context, soundId)
+                        mediaPlayer.start()
+                        mediaPlayer.setOnCompletionListener { mp -> mp.release() }
+                    }
                 }
-            })
+            )
         }
     }
 }
 
 @Composable
-fun AlphabetItem(letter: Word, onPlaySound: () -> Unit) {
+fun AlphabetItem(
+    letter: Word,
+    isArabic: Boolean,
+    onPlaySound: () -> Unit
+) {
     Card(
         modifier = Modifier
             .size(100.dp)
@@ -69,7 +81,7 @@ fun AlphabetItem(letter: Word, onPlaySound: () -> Unit) {
                 fontSize = 40.sp
             )
             Text(
-                text = letter.tamazight,
+                text = if (isArabic) letter.arabic else letter.tamazight,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.secondary
             )

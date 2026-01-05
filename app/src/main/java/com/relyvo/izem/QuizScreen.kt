@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,10 +17,9 @@ import androidx.compose.ui.unit.sp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.relyvo.izem.data.DataSource
 import com.relyvo.izem.model.Word
-import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
-fun QuizScreen() {
+fun QuizScreen(isArabic: Boolean) {
     val context = LocalContext.current
 
     val reviewManager = remember { ReviewManagerFactory.create(context) }
@@ -57,7 +57,7 @@ fun QuizScreen() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Score: $score",
+            text = if (isArabic) "النقاط: $score" else "Score: $score",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -73,13 +73,22 @@ fun QuizScreen() {
                 modifier = Modifier.padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "How do you say:", fontSize = 18.sp)
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = currentWord.english,
+                    text = if (isArabic) "كيف نقول:" else "How do you say:",
+                    fontSize = 18.sp,
+                    maxLines = 1,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    style = LocalTextStyle.current.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Content)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = if (isArabic) currentWord.arabic else currentWord.english,
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = if (isArabic && currentWord.arabic.length > 10) 32.sp else 45.sp
                 )
             }
         }
@@ -103,17 +112,15 @@ fun QuizScreen() {
                         selectedAnswer = option
                         isCorrect = (option == currentWord)
 
-                        val soundId = if (isCorrect) R.raw.correct else R.raw.wrong
-                        try {
+                        val soundId = if (isCorrect) Utils.getAudioId(context, "correct") else Utils.getAudioId(context, "wrong")
+                        if (soundId != 0) {
                             val mediaPlayer = MediaPlayer.create(context, soundId)
-                            mediaPlayer?.start()
-                            mediaPlayer?.setOnCompletionListener { mp -> mp.release() }
-                        } catch (e: Exception) {
+                            mediaPlayer.start()
+                            mediaPlayer.setOnCompletionListener { mp -> mp.release() }
                         }
 
                         if (isCorrect) {
                             score += 10
-
                             if (score == 50) {
                                 showReviewDialog()
                             }
@@ -143,7 +150,7 @@ fun QuizScreen() {
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
-                Text("Next Question ➡\uFE0F")
+                Text(if (isArabic) "السؤال التالي ⬅" else "Next Question ➡")
             }
         }
     }
