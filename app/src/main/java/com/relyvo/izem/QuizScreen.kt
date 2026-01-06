@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.sp
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.relyvo.izem.data.DataSource
 import com.relyvo.izem.model.Word
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun QuizScreen(isArabic: Boolean) {
@@ -36,6 +38,8 @@ fun QuizScreen(isArabic: Boolean) {
     var selectedAnswer by remember { mutableStateOf<Word?>(null) }
     var isCorrect by remember { mutableStateOf(false) }
 
+    val scrollState = rememberScrollState()
+
     fun showReviewDialog() {
         val request = reviewManager.requestReviewFlow()
         request.addOnCompleteListener { task ->
@@ -52,7 +56,8 @@ fun QuizScreen(isArabic: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
