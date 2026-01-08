@@ -9,6 +9,12 @@ import com.relyvo.izem.data.FirestoreRepo
 import com.relyvo.izem.ui.theme.IzemTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,8 +38,16 @@ class MainActivity : ComponentActivity() {
         }*/
 
         setContent {
+            val viewModel: AppViewModel = viewModel()
+            val isArabic by viewModel.isArabic.collectAsState()
+
+            val direction = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
+
             IzemTheme {
-                MainScreen()
+                CompositionLocalProvider(LocalLayoutDirection provides direction) {
+
+                    MainScreen(viewModel = viewModel)
+                }
             }
         }
     }

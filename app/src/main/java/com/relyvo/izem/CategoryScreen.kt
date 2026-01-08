@@ -48,7 +48,7 @@ fun CategoryScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = if (isArabic) "أزول" else "Azul!",
+                    text = if (isArabic) "أزول!" else "Azul!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -77,7 +77,7 @@ fun CategoryScreen(
                     )
                 }
 
-                IconButton(onClick = { shareApp(context) }) {
+                IconButton(onClick = { shareApp(context, isArabic) }) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = "Share App",
@@ -140,14 +140,21 @@ fun CategoryItem(category: Category, isArabic: Boolean, onClick: () -> Unit) {
     }
 }
 
-fun shareApp(context: Context) {
+fun shareApp(context: Context, isArabic: Boolean) {
     val appPackageName = context.packageName
+
+    val message = if (isArabic) {
+        "أزول! أنا أتعلم الأمازيغية مع تطبيق إيزم. حمله من هنا:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
+    } else {
+        "Azul! I'm learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
+    }
+
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_TEXT, "Azul! I'm learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=$appPackageName")
+        putExtra(Intent.EXTRA_TEXT, message)
         type = "text/plain"
     }
-    val shareIntent = Intent.createChooser(sendIntent, "Share Izem via")
+    val shareIntent = Intent.createChooser(sendIntent, if (isArabic) "مشاركة إيزم عبر" else "Share Izem via")
     context.startActivity(shareIntent)
 }
 
