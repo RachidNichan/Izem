@@ -1,6 +1,7 @@
 package com.relyvo.izem.data
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.toObjects
 import com.relyvo.izem.model.Category
 import com.relyvo.izem.model.Word
@@ -10,42 +11,65 @@ class FirestoreRepo {
 
     private val db = FirebaseFirestore.getInstance()
 
-    suspend fun getCategories(): List<Category> {
-        return try {
-            val snapshot = db.collection("categories").get().await()
-            val list = snapshot.toObjects<Category>()
+    fun listenCategories(
+        onResult: (List<Category>) -> Unit
+    ) {
+        db.collection("categories")
+            .addSnapshotListener { snapshot, error ->
 
-            list.sortedBy { it.id }
-        } catch (e: Exception) {
-            println("❌ Error fetching categories: ${e.message}")
-            emptyList()
-        }
+                if (error != null) {
+                    println("❌ ${error.message}")
+                    onResult(emptyList())
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val list = snapshot.toObjects<Category>()
+                        .sortedBy { it.id }
+
+                    onResult(list)
+                }
+            }
     }
 
-    suspend fun getWordsByCategory(categoryId: String): List<Word> {
-        return try {
-            val snapshot = db.collection("words")
-                .whereEqualTo("categoryId", categoryId)
-                .get()
-                .await()
+    fun listenWordsByCategory(
+        categoryId: String,
+        onResult: (List<Word>) -> Unit
+    ): ListenerRegistration {
 
-            val list = snapshot.toObjects<Word>()
+        return db.collection("words")
+            .whereEqualTo("categoryId", categoryId)
+            .addSnapshotListener { snapshot, error ->
 
-            list.sortedBy { it.id }
+                if (error != null) {
+                    onResult(emptyList())
+                    return@addSnapshotListener
+                }
 
-        } catch (e: Exception) {
-            println("❌ Error fetching words: ${e.message}")
-            emptyList()
-        }
+                if (snapshot != null) {
+                    val list = snapshot.toObjects<Word>()
+                        .sortedBy { it.id }
+
+                    onResult(list)
+                }
+            }
     }
 
-    suspend fun getAllWords(): List<Word> {
-        return try {
-            val snapshot = db.collection("words").get().await()
-            snapshot.toObjects<Word>()
-        } catch (e: Exception) {
-            emptyList()
-        }
+    fun listenAllWords(
+        onResult: (List<Word>) -> Unit
+    ) {
+        db.collection("words")
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    onResult(emptyList())
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    onResult(snapshot.toObjects())
+                }
+            }
     }
 
     fun uploadDataToFirestore() {

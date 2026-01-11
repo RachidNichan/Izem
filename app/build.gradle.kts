@@ -12,8 +12,8 @@ android {
         applicationId = "com.relyvo.izem"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "3.0.2"
+        versionCode = 9
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -51,13 +51,15 @@ android {
 }
 
 dependencies {
-
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
+    implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation(libs.firebase.messaging)
     implementation(libs.google.ads)
     implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
     implementation(libs.firebase.firestore)
     implementation(libs.play.review)
-    implementation("androidx.navigation:navigation-compose:2.8.3")
-    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

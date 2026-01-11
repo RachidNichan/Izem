@@ -29,6 +29,7 @@ play-review = { group = "com.google.android.play", name = "review-ktx", version 
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version = "25.1.1" }
 google-ads = { group = "com.google.android.gms", name = "play-services-ads", version = "23.6.0" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

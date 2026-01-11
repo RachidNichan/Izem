@@ -22,8 +22,14 @@ object DataSource {
     )
 
     val familyList = listOf(
-        Word("5", "family", "Man", "رجل", "Argaz", "ⴰⵔⴳⴰⵣ", "man", "argaz"),
-        Word("6", "family", "Woman", "امرأة", "Tamghart", "ⵜⴰⵎⵖⴰⵔⵜ", "woman", "tamghart")
+        Word("fam1", "family", "Man", "رجل", "Argaz", "ⴰⵔⴳⴰⵣ", "man", "argaz"),
+        Word("fam2", "family", "Woman", "امرأة", "Tamghart", "ⵜⴰⵎⵖⴰⵔⵜ", "woman", "tamghart"),
+        Word("fam3", "family", "Father", "أب", "Baba", "ⴱⴰⴱⴰ", "father", "baba"),
+        Word("fam4", "family", "Mother", "أم", "Yemma", "ⵢⵎⵎⴰ", "mother", "yemma"),
+        Word("fam5", "family", "Brother", "أخ", "Gma", "ⴳⵎⴰ", "brother", "gma"),
+        Word("fam6", "family", "Sister", "أخت", "Ultma", "ⵓⵍⵜⵎⴰ", "sister", "ultma"),
+        Word("fam7", "family", "Boy / Son", "ولد / ابن", "Afrukh", "ⴰⴼⵔⵓⵅ", "boy", "afrukh"),
+        Word("fam8", "family", "Girl / Daughter", "بنت / ابنة", "Tafrukht", "ⵜⴰⴼⵔⵓⵅⵜ", "girl", "tafrukht")
     )
 
     val numbersList = listOf(
