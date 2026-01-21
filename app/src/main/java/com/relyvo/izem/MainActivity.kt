@@ -43,14 +43,6 @@ class MainActivity : ComponentActivity() {
             keepSplashOnScreen = false
         }
 
-        /*
-        lifecycleScope.launch {
-            val repo = FirestoreRepo()
-
-            repo.uploadDataToFirestore()
-        }
-        */
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }

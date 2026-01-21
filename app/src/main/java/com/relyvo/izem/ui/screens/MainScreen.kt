@@ -25,7 +25,11 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
 
-    val bottomNavItems = listOf(Screen.Categories, Screen.Quiz)
+    val bottomNavItems = listOf(
+        Screen.Categories,
+        Screen.Quiz,
+        Screen.Profile
+    )
 
     val isArabic by viewModel.isArabic.collectAsState()
 
@@ -97,7 +101,20 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                     }
 
                     composable(Screen.Quiz.route) {
-                        QuizScreen(isArabic = isArabic)
+                        QuizScreen(
+                            isArabic = isArabic,
+                            viewModel = viewModel,
+                            onBackToMenu = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
+                    composable(Screen.Profile.route) {
+                        ProfileScreen(
+                            isArabic = isArabic,
+                            viewModel = viewModel
+                        )
                     }
                 }
             }

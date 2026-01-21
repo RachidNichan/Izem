@@ -7,6 +7,7 @@ import android.os.Build
 import com.google.android.gms.ads.MobileAds
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.PersistentCacheSettings
 import com.relyvo.izem.utils.InterstitialAdManager
 
 class IzemApp : Application() {
@@ -14,7 +15,7 @@ class IzemApp : Application() {
         super.onCreate()
 
         val settings = FirebaseFirestoreSettings.Builder()
-            .setPersistenceEnabled(true)
+            .setLocalCacheSettings(PersistentCacheSettings.newBuilder().build())
             .build()
         FirebaseFirestore.getInstance().firestoreSettings = settings
 

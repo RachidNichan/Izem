@@ -1,6 +1,5 @@
 package com.relyvo.izem.ui.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -26,28 +25,32 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.media.MediaPlayer
+import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.relyvo.izem.utils.Utils
 import com.relyvo.izem.model.Word
+import com.relyvo.izem.R
+import com.relyvo.izem.utils.SmartAudioPlayer
 
 @Composable
 fun WordItem(word: Word, isArabic: Boolean) {
     val context = LocalContext.current
 
-    val imageId = Utils.getDrawableId(context, word.imageName)
-    val soundId = Utils.getAudioId(context, word.audioName)
+    val placeholderPainter = rememberVectorPainter(image = Icons.Default.Info)
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
             .clickable {
-                if (soundId != 0) {
-                    val mediaPlayer = MediaPlayer.create(context, soundId)
-                    mediaPlayer.start()
-                    mediaPlayer.setOnCompletionListener { mp -> mp.release() }
-                }
+                SmartAudioPlayer.playAudio(context, word.audioUrl, word.id)
             },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -58,10 +61,17 @@ fun WordItem(word: Word, isArabic: Boolean) {
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (imageId != 0) {
-                Image(
-                    painter = painterResource(id = imageId),
+            if (word.imageUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(word.imageUrl)
+                        .crossfade(true)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .build(),
                     contentDescription = word.english,
+                    placeholder = placeholderPainter,
+                    error = placeholderPainter,
                     modifier = Modifier
                         .size(60.dp)
                         .clip(CircleShape),

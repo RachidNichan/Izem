@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relyvo.izem.utils.Utils
 import com.relyvo.izem.model.Word
+import com.relyvo.izem.utils.SmartAudioPlayer
 
 @Composable
 fun AlphabetScreen(
@@ -43,13 +44,7 @@ fun AlphabetScreen(
                 letter = letter,
                 isArabic = isArabic,
                 onPlaySound = {
-                    val soundId = Utils.getAudioId(context, letter.audioName)
-
-                    if (soundId != 0) {
-                        val mediaPlayer = MediaPlayer.create(context, soundId)
-                        mediaPlayer.start()
-                        mediaPlayer.setOnCompletionListener { mp -> mp.release() }
-                    }
+                    SmartAudioPlayer.playAudio(context, letter.audioUrl, letter.id)
                 }
             )
         }

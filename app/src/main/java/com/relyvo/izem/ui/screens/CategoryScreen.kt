@@ -10,20 +10,27 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.relyvo.izem.utils.Utils
 import com.relyvo.izem.model.Category
+import com.relyvo.izem.R
 
 @Composable
 fun CategoryScreen(
@@ -39,6 +46,7 @@ fun CategoryScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -87,6 +95,7 @@ fun CategoryScreen(
             }
         }
 
+        // Grid
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             contentPadding = PaddingValues(8.dp),
@@ -107,7 +116,7 @@ fun CategoryScreen(
 @Composable
 fun CategoryItem(category: Category, isArabic: Boolean, onClick: () -> Unit) {
     val context = LocalContext.current
-    val iconId = Utils.getDrawableId(context, category.iconName)
+    val errorPainter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.List)
 
     Card(
         modifier = Modifier
@@ -122,15 +131,23 @@ fun CategoryItem(category: Category, isArabic: Boolean, onClick: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (iconId != 0) {
-                Image(
-                    painter = painterResource(id = iconId),
+
+            if (category.iconUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(category.iconUrl)
+                        .crossfade(true)
+                        .diskCachePolicy(CachePolicy.ENABLED)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .build(),
                     contentDescription = category.titleEn,
+                    error = errorPainter,
                     modifier = Modifier.size(64.dp),
                     contentScale = ContentScale.Fit
                 )
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = if (isArabic) category.titleAr else category.titleEn,
                 fontSize = 18.sp,
@@ -142,13 +159,11 @@ fun CategoryItem(category: Category, isArabic: Boolean, onClick: () -> Unit) {
 
 fun shareApp(context: Context, isArabic: Boolean) {
     val appPackageName = context.packageName
-
     val message = if (isArabic) {
         "أزول! أنا أتعلم الأمازيغية مع تطبيق إيزم. حمله من هنا:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
     } else {
         "Azul! I'm learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
     }
-
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
         putExtra(Intent.EXTRA_TEXT, message)
