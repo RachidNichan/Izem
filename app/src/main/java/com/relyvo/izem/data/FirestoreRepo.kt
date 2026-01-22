@@ -2,6 +2,7 @@ package com.relyvo.izem.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.relyvo.izem.model.Category
@@ -34,18 +35,14 @@ class FirestoreRepo {
 
         return db.collection("words")
             .whereEqualTo("categoryId", categoryId)
+            .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
-
                 if (error != null) {
                     onResult(emptyList())
                     return@addSnapshotListener
                 }
-
                 if (snapshot != null) {
-                    val list = snapshot.toObjects<Word>()
-                        .sortedBy { it.id }
-
-                    onResult(list)
+                    onResult(snapshot.toObjects<Word>())
                 }
             }
     }
