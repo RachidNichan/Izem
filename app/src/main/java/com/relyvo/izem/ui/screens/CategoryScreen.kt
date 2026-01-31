@@ -176,7 +176,7 @@ fun shareApp(context: Context, isArabic: Boolean) {
 fun sendFeedback(context: Context) {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
         data = Uri.parse("mailto:")
-        putExtra(Intent.EXTRA_EMAIL, arrayOf("rachid@relyvo.com"))
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("izem@relyvo.com"))
         putExtra(Intent.EXTRA_SUBJECT, "Izem App Feedback")
     }
     try {
