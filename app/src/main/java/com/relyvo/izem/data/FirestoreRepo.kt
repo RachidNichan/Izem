@@ -42,7 +42,10 @@ class FirestoreRepo {
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    onResult(snapshot.toObjects<Word>())
+                    val list = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject<Word>()?.copy(id = doc.id)
+                    }
+                    onResult(list)
                 }
             }
     }
