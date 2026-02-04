@@ -18,20 +18,24 @@ object SmartAudioPlayer {
     fun playAudio(context: Context, url: String, wordId: String) {
         if (url.isEmpty()) return
 
-        val safeFileName = if (wordId.isNotEmpty()) {
-            val extension = if (url.contains(".m4a")) "m4a" else "mp3"
-            "$wordId.$extension"
+        val rawFileName = url.substringAfterLast("/").substringBefore("?")
+
+        val safeFileName = if (rawFileName.isNotEmpty() && rawFileName.contains(".")) {
+            rawFileName
         } else {
-            url.substringAfterLast("/").substringBefore("?")
+            val extension = if (url.contains(".m4a")) "m4a" else "mp3"
+            "${wordId}.$extension"
         }
 
-        Log.d("IzemAudio", "Playing: $safeFileName")
+        // Log.d("IzemAudio", "Final Safe Cache File: $safeFileName")
 
         val file = File(context.cacheDir, safeFileName)
 
         if (file.exists() && file.length() > 0) {
+            // Log.d("IzemAudio", "Playing from Cache ✅")
             playFromFile(context, file)
         } else {
+            // Log.d("IzemAudio", "Downloading new version... 🌐")
             downloadAndPlay(context, url, file)
         }
     }
