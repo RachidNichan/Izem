@@ -55,6 +55,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
     implementation(libs.androidx.datastore)
     implementation(libs.coil.compose)
     implementation(libs.firebase.auth)

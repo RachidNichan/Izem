@@ -26,7 +26,8 @@ import com.relyvo.izem.utils.SmartAudioPlayer
 @Composable
 fun AlphabetScreen(
     letters: List<Word>,
-    isArabic: Boolean
+    isArabic: Boolean,
+    onLetterClick: (String) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -48,7 +49,8 @@ fun AlphabetScreen(
                     isArabic = isArabic,
                     onPlaySound = {
                         SmartAudioPlayer.playAudio(context, letter.audioUrl, letter.id)
-                    }
+                    },
+                    onLetterClick = onLetterClick
                 )
             }
         }
@@ -59,7 +61,8 @@ fun AlphabetScreen(
 fun AlphabetItemUpgrade(
     letter: Word,
     isArabic: Boolean,
-    onPlaySound: () -> Unit
+    onPlaySound: () -> Unit,
+    onLetterClick: (String) -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -70,7 +73,10 @@ fun AlphabetItemUpgrade(
                 shape = RoundedCornerShape(28.dp),
                 ambientColor = Color.LightGray
             )
-            .clickable { onPlaySound() },
+            .clickable {
+                onPlaySound()
+                onLetterClick(letter.id)
+                       },
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, IzemBlue.copy(alpha = 0.1f))

@@ -2,8 +2,9 @@ package com.relyvo.izem.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 import com.relyvo.izem.data.AuthRepo
 import com.relyvo.izem.data.FirestoreRepo
@@ -19,8 +20,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repo = FirestoreRepo()
     private val authRepo = AuthRepo()
+    private val auth = FirebaseAuth.getInstance()
     private val settingsRepo = SettingsRepo(application)
 
+    // --- UI States ---
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
     val categories = _categories.asStateFlow()
 
@@ -36,94 +39,134 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _isArabic = MutableStateFlow(false)
     val isArabic = _isArabic.asStateFlow()
 
+    private val _isUserAnonymous = MutableStateFlow(true)
+    val isUserAnonymous = _isUserAnonymous.asStateFlow()
+
+    // --- Listeners ---
     private var wordsListener: ListenerRegistration? = null
+    private var profileListener: ListenerRegistration? = null
 
     init {
-
-        signInAnonymously()
-
-        viewModelScope.launch {
-            settingsRepo.isArabic.collect { savedIsArabic ->
-                _isArabic.value = savedIsArabic
-            }
-        }
-
-        // 🔹 Categories (Cloud + Offline + Live)
-        repo.listenCategories { list ->
-            _categories.value = list
-        }
-
-        // 🔹 All Words
-        repo.listenAllWords { list ->
-            _allWords.value = list
-        }
+        observeUserStatus()
 
         viewModelScope.launch {
-            val uid = authRepo.currentUserId
-            if (uid != null) {
-                repo.listenToUserProfile(uid) { profile ->
-                    _userProfile.value = profile
-                }
+            settingsRepo.isArabic.collect { _isArabic.value = it }
+        }
+
+        repo.listenCategories { _categories.value = it }
+        repo.listenAllWords { _allWords.value = it }
+    }
+
+    private fun observeUserStatus() {
+        auth.addAuthStateListener { firebaseAuth ->
+            val user = firebaseAuth.currentUser
+
+            if (user != null) {
+                _isUserAnonymous.value = user.isAnonymous
+                startProfileListener(user.uid)
+            } else {
+                signInAnonymously()
             }
+        }
+    }
+
+    private fun startProfileListener(uid: String) {
+        profileListener?.remove()
+        profileListener = repo.listenToUserProfile(uid) { profile ->
+            _userProfile.value = profile
         }
     }
 
     private fun signInAnonymously() {
         viewModelScope.launch {
-            if (!authRepo.isUserLoggedIn) {
-                val success = authRepo.signInAnonymously()
-                if (success) {
-                    println("🦁 User signed in anonymously! UID: ${authRepo.currentUserId}")
-                }
+            authRepo.signInAnonymously()
+        }
+    }
+
+    fun linkWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+        viewModelScope.launch {
+            if (authRepo.linkAccount(credential)) {
+                onSuccess()
             } else {
-                println("🦁 User already logged in. UID: ${authRepo.currentUserId}")
+                onError("Account linking failed.")
             }
         }
     }
 
-    private fun getLevelName(xp: Int): String {
-        return when {
-            xp < 100 -> "Izem Amezwaru"
-            xp < 500 -> "Izem Anlmad"
-            xp < 1000 -> "Izem Amqran"
-            else -> "Agellid n Izmawn"
+    fun linkWithEmail(email: String, pass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (email.isBlank() || pass.length < 6) {
+            onError("Invalid email or password.")
+            return
         }
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, pass)
+        viewModelScope.launch {
+            if (authRepo.linkAccount(credential)) {
+                authRepo.currentUser?.sendEmailVerification()
+                onSuccess()
+            } else {
+                onError("Linking failed.")
+            }
+        }
+    }
+
+    fun signInWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+        viewModelScope.launch {
+            if (authRepo.signInWithCredential(credential)) {
+                onSuccess()
+            } else { onError("Login failed.") }
+        }
+    }
+
+    fun signInWithEmail(email: String, pass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, pass)
+        viewModelScope.launch {
+            if (authRepo.signInWithCredential(credential)) {
+                onSuccess()
+            } else { onError("Login failed.") }
+        }
+    }
+
+    fun logout(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            profileListener?.remove()
+            auth.signOut()
+            onComplete()
+        }
+    }
+
+    fun onWordClicked(wordId: String) {
+        val uid = authRepo.currentUserId ?: return
+        if (!_userProfile.value.learnedWords.contains(wordId)) {
+            viewModelScope.launch { repo.markWordAsLearned(uid, wordId) }
+        }
+    }
+
+    fun trackVisit() {
+        val uid = authRepo.currentUserId ?: return
+        repo.updateActiveDays(uid)
     }
 
     fun finishQuizSession(scoreInSession: Int) {
         val uid = authRepo.currentUserId ?: return
-
-        repo.saveQuizResult(userId = uid, score = scoreInSession, totalQuestions = 10)
-
-        repo.updateUserProgress(userId = uid, xpGained = scoreInSession) { newTotalXP ->
-
-            val newLevel = getLevelName(newTotalXP)
-            repo.updateUserLevel(uid, newLevel)
-
-            println("🦁 Updated! XP: $newTotalXP, Level: $newLevel")
-        }
+        repo.saveQuizResult(uid, scoreInSession, 10)
+        repo.updateUserProgress(uid, scoreInSession) { /* سيتحدث تلقائياً عبر الـ Listener */ }
     }
 
-    // 🔹 Words by Category (Realtime)
     fun listenWordsByCategory(categoryId: String) {
-
         wordsListener?.remove()
-        wordsListener = null
+        wordsListener = repo.listenWordsByCategory(categoryId) { _currentWords.value = it }
+    }
 
-        wordsListener = repo.listenWordsByCategory(categoryId) { list ->
-            _currentWords.value = list
-        }
+    fun toggleLanguage() {
+        val newValue = !_isArabic.value
+        viewModelScope.launch { settingsRepo.setArabic(newValue) }
     }
 
     override fun onCleared() {
         super.onCleared()
         wordsListener?.remove()
-    }
-
-    fun toggleLanguage() {
-        val newValue = !_isArabic.value
-        viewModelScope.launch {
-            settingsRepo.setArabic(newValue)
-        }
+        profileListener?.remove()
     }
 }

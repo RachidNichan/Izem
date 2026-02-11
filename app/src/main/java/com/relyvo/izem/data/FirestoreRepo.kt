@@ -1,5 +1,6 @@
 package com.relyvo.izem.data
 
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -9,6 +10,9 @@ import com.relyvo.izem.model.Category
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Word
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class FirestoreRepo {
 
@@ -113,25 +117,27 @@ class FirestoreRepo {
             }
     }
 
-    fun listenToUserProfile(userId: String, onResult: (UserProfile) -> Unit) {
-        db.collection("users").document(userId)
+    fun listenToUserProfile(userId: String, onResult: (UserProfile) -> Unit): ListenerRegistration {
+        return db.collection("users").document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    println("❌ Firestore Listen Error: ${error.message}")
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null && snapshot.exists()) {
                     try {
-                        val user = snapshot.toObject<UserProfile>()
+                        val xp = snapshot.getLong("totalXP")?.toInt() ?: 0
+                        val level = snapshot.getString("currentLevel") ?: "Izem Amezwaru"
+                        val learned = snapshot.get("learnedWords") as? List<String> ?: emptyList()
+                        val days = snapshot.getLong("learningDays")?.toInt() ?: 0
 
-                        if (user != null) {
-                            onResult(user)
-                        } else {
-                            onResult(UserProfile())
-                        }
+                        onResult(UserProfile(
+                            totalXP = xp,
+                            currentLevel = level,
+                            learnedWords = learned,
+                            learningDays = days
+                        ))
                     } catch (e: Exception) {
-                        println("❌ Error converting data: ${e.message}")
                         onResult(UserProfile())
                     }
                 } else {
@@ -139,4 +145,32 @@ class FirestoreRepo {
                 }
             }
     }
+
+    fun updateActiveDays(userId: String) {
+        val userRef = db.collection("users").document(userId)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val lastDate = snapshot.getString("lastDateActive") ?: ""
+
+            if (lastDate != today) {
+                val currentDays = snapshot.getLong("learningDays")?.toInt() ?: 0
+                transaction.update(userRef, "learningDays", currentDays + 1)
+                transaction.update(userRef, "lastDateActive", today)
+            }
+            null
+        }
+    }
+
+    fun markWordAsLearned(userId: String, wordId: String) {
+        val userRef = db.collection("users").document(userId)
+
+        userRef.update("learnedWords", FieldValue.arrayUnion(wordId))
+            .addOnFailureListener {
+                val data = hashMapOf("learnedWords" to listOf(wordId))
+                userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+            }
+    }
+
 }

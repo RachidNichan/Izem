@@ -30,6 +30,10 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
     val currentWords by viewModel.currentWords.collectAsState()
     val isArabic by viewModel.isArabic.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.trackVisit()
+    }
+
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.Quiz,
@@ -129,9 +133,17 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                     composable("word_list/{categoryId}") { backStackEntry ->
                         val categoryId = backStackEntry.arguments?.getString("categoryId")
                         if (categoryId == "alphabet") {
-                            AlphabetScreen(letters = currentWords, isArabic = isArabic)
+                            AlphabetScreen(
+                                letters = currentWords,
+                                isArabic = isArabic,
+                                onLetterClick = { wordId -> viewModel.onWordClicked(wordId) }
+                            )
                         } else {
-                            WordList(wordList = currentWords, isArabic = isArabic)
+                            WordList(
+                                wordList = currentWords,
+                                isArabic = isArabic,
+                                onWordClick = { wordId -> viewModel.onWordClicked(wordId) }
+                            )
                         }
                     }
 

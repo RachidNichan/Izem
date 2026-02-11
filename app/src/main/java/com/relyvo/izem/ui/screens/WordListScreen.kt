@@ -33,6 +33,7 @@ import com.relyvo.izem.utils.SmartAudioPlayer
 fun WordList(
     wordList: List<Word>,
     isArabic: Boolean,
+    onWordClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -46,14 +47,22 @@ fun WordList(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(wordList, key = { it.id }) { currentWord ->
-                WordItemUpgrade(word = currentWord, isArabic = isArabic)
+                WordItemUpgrade(
+                    word = currentWord,
+                    isArabic = isArabic,
+                    onWordClick = onWordClick
+                )
             }
         }
     }
 }
 
 @Composable
-fun WordItemUpgrade(word: Word, isArabic: Boolean) {
+fun WordItemUpgrade(
+    word: Word,
+    isArabic: Boolean,
+    onWordClick: (String) -> Unit
+) {
     val context = LocalContext.current
 
     Surface(
@@ -66,6 +75,7 @@ fun WordItemUpgrade(word: Word, isArabic: Boolean) {
             )
             .clickable {
                 SmartAudioPlayer.playAudio(context, word.audioUrl, word.id)
+                onWordClick(word.id)
             },
         shape = RoundedCornerShape(28.dp),
         color = MaterialTheme.colorScheme.surface,

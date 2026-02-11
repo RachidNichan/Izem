@@ -12,7 +12,28 @@
           "package_name": "com.relyvo.izem"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "360506682366-dvlj1j4494ju6q8rftfkq5dk4ablfhvu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.relyvo.izem",
+            "certificate_hash": "e5a144691bbb0d9db6e80d2cef7d3373888d8fc8"
+          }
+        },
+        {
+          "client_id": "360506682366-gp9prefctsljcujdoutnscaca1n70bq4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.relyvo.izem",
+            "certificate_hash": "a8641e8e6bea22a55345841773b4fd0860da7ff3"
+          }
+        },
+        {
+          "client_id": "360506682366-4tftl6brl4n5g8bgcbrdcnv2qdemkra6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDHpB345Zy7UfECeaPdP61Ll7om9_Cdi5o"
@@ -20,9 +41,15 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "360506682366-4tftl6brl4n5g8bgcbrdcnv2qdemkra6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-4765019619595524~9231777084"
     }
   ],
   "configuration_version": "1"
