@@ -7,12 +7,15 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.relyvo.izem.model.Category
+import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Word
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.tasks.await
 
 class FirestoreRepo {
 
@@ -171,6 +174,34 @@ class FirestoreRepo {
                 val data = hashMapOf("learnedWords" to listOf(wordId))
                 userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
             }
+    }
+
+    fun submitFullSuggestion(suggestion: Suggestion) {
+        db.collection("suggestions")
+            .add(suggestion.copy(createdAt = com.google.firebase.Timestamp.now()))
+            .addOnSuccessListener {
+                println("✅ Suggestion submitted successfully")
+            }
+            .addOnFailureListener { e ->
+                println("❌ Error: ${e.message}")
+            }
+    }
+
+    private val storage = com.google.firebase.storage.FirebaseStorage.getInstance()
+
+    suspend fun uploadSuggestionFile(uri: android.net.Uri, folder: String): String {
+        return try {
+            val fileName = "${System.currentTimeMillis()}_${uri.lastPathSegment}"
+            val fileRef = storage.reference.child("suggestions/$folder/$fileName")
+
+            fileRef.putFile(uri).await()
+
+            val downloadUrl = fileRef.downloadUrl.await().toString()
+            downloadUrl
+        } catch (e: Exception) {
+            println("❌ Storage Upload Error: ${e.message}")
+            ""
+        }
     }
 
 }

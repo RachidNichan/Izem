@@ -131,7 +131,7 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                     }
 
                     composable("word_list/{categoryId}") { backStackEntry ->
-                        val categoryId = backStackEntry.arguments?.getString("categoryId")
+                        val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
                         if (categoryId == "alphabet") {
                             AlphabetScreen(
                                 letters = currentWords,
@@ -140,9 +140,11 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                             )
                         } else {
                             WordList(
+                                categoryId = categoryId,
                                 wordList = currentWords,
                                 isArabic = isArabic,
-                                onWordClick = { wordId -> viewModel.onWordClicked(wordId) }
+                                onWordClick = { wordId -> viewModel.onWordClicked(wordId) },
+                                viewModel = viewModel
                             )
                         }
                     }

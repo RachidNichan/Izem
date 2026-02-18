@@ -10,6 +10,7 @@ import com.relyvo.izem.data.AuthRepo
 import com.relyvo.izem.data.FirestoreRepo
 import com.relyvo.izem.data.SettingsRepo
 import com.relyvo.izem.model.Category
+import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Word
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -162,6 +163,35 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleLanguage() {
         val newValue = !_isArabic.value
         viewModelScope.launch { settingsRepo.setArabic(newValue) }
+    }
+
+    fun submitSuggestion(
+        suggestion: Suggestion,
+        imageUri: android.net.Uri?,
+        audioUri: android.net.Uri?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val uid = authRepo.currentUserId ?: return
+
+        viewModelScope.launch {
+            try {
+                val imageUrl = imageUri?.let { repo.uploadSuggestionFile(it, "images") } ?: ""
+                val audioUrl = audioUri?.let { repo.uploadSuggestionFile(it, "audio") } ?: ""
+
+                val finalSuggestion = suggestion.copy(
+                    userId = uid,
+                    imageUrl = imageUrl,
+                    audioUrl = audioUrl,
+                    status = "pending"
+                )
+
+                repo.submitFullSuggestion(finalSuggestion)
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.message ?: "Error submitting")
+            }
+        }
     }
 
     override fun onCleared() {

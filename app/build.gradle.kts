@@ -51,28 +51,43 @@ android {
 }
 
 dependencies {
+    // --- AndroidX & UI ---
     implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.activity:activity-ktx:1.8.2")
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
-    implementation(libs.androidx.datastore)
-    implementation(libs.coil.compose)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.messaging)
-    implementation(libs.google.ads)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
-    implementation(libs.firebase.firestore)
-    implementation(libs.play.review)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.datastore)
+
+    // --- Google Play Services ---
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation(libs.play.review)
+    implementation(libs.google.ads)
+
+    // --- Coroutines ---
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // --- Image Loading ---
+    implementation(libs.coil.compose)
+
+    // --- Firebase ---
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-storage")
+
+    // --- Compose BOM ---
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.analytics)
+
+    // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
