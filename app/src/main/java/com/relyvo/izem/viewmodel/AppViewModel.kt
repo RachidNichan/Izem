@@ -152,7 +152,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun finishQuizSession(scoreInSession: Int) {
         val uid = authRepo.currentUserId ?: return
         repo.saveQuizResult(uid, scoreInSession, 10)
-        repo.updateUserProgress(uid, scoreInSession) { /* سيتحدث تلقائياً عبر الـ Listener */ }
+        repo.updateUserProgress(uid, scoreInSession) { /* Listener */ }
     }
 
     fun listenWordsByCategory(categoryId: String) {
@@ -176,8 +176,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                val imageUrl = imageUri?.let { repo.uploadSuggestionFile(it, "images") } ?: ""
-                val audioUrl = audioUri?.let { repo.uploadSuggestionFile(it, "audio") } ?: ""
+                val imageUrl = if (imageUri != null) {
+                    repo.uploadSuggestionFile(imageUri, "images")
+                } else {
+                    suggestion.imageUrl
+                }
+
+                val audioUrl = if (audioUri != null) {
+                    repo.uploadSuggestionFile(audioUri, "audio")
+                } else {
+                    suggestion.audioUrl
+                }
 
                 val finalSuggestion = suggestion.copy(
                     userId = uid,

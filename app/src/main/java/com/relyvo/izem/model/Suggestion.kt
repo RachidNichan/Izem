@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp
 
 data class Suggestion(
     val id: String = "",
+    val wordId: String = "",
     val type: String = "NEW",
     val categoryId: String = "",
     val dialect: String = "Standard", // (IRCAM, Souss, Atlas, Rif)

@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -18,11 +19,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.relyvo.izem.model.Word
+import com.relyvo.izem.ui.modal.ContributionSheet
 import com.relyvo.izem.ui.theme.IzemBlue
 import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.ui.theme.IzemOrange
 import com.relyvo.izem.viewmodel.AppViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: AppViewModel = viewModel()) {
     val navController = rememberNavController()
@@ -132,20 +136,44 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
 
                     composable("word_list/{categoryId}") { backStackEntry ->
                         val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
-                        if (categoryId == "alphabet") {
-                            AlphabetScreen(
-                                letters = currentWords,
-                                isArabic = isArabic,
-                                onLetterClick = { wordId -> viewModel.onWordClicked(wordId) }
-                            )
-                        } else {
-                            WordList(
-                                categoryId = categoryId,
-                                wordList = currentWords,
-                                isArabic = isArabic,
-                                onWordClick = { wordId -> viewModel.onWordClicked(wordId) },
-                                viewModel = viewModel
-                            )
+                        var selectedWordForCorrection by remember { mutableStateOf<Word?>(null) }
+                        var showSheet by remember { mutableStateOf(false) }
+
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            if (categoryId == "alphabet") {
+                                AlphabetScreen(
+                                    letters = currentWords,
+                                    isArabic = isArabic,
+                                    onLetterClick = { wordId -> viewModel.onWordClicked(wordId) }
+                                )
+                            } else {
+                                WordList(
+                                    categoryId = categoryId,
+                                    wordList = currentWords,
+                                    isArabic = isArabic,
+                                    onWordClick = { wordId -> viewModel.onWordClicked(wordId) },
+                                    viewModel = viewModel
+                                )
+                            }
+
+                            if (showSheet) {
+                                ModalBottomSheet(
+                                    onDismissRequest = {
+                                        showSheet = false
+                                        selectedWordForCorrection = null
+                                    },
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                                ) {
+                                    ContributionSheet(
+                                        isArabic = isArabic,
+                                        categoryId = categoryId,
+                                        existingWord = selectedWordForCorrection,
+                                        onDismiss = { showSheet = false },
+                                        viewModel = viewModel
+                                    )
+                                }
+                            }
                         }
                     }
 

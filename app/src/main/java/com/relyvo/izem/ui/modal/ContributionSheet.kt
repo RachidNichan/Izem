@@ -1,11 +1,9 @@
 package com.relyvo.izem.ui.modal
 
-import android.app.Activity
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.relyvo.izem.model.Suggestion
+import com.relyvo.izem.model.Word
 import com.relyvo.izem.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,28 +28,24 @@ import com.relyvo.izem.viewmodel.AppViewModel
 fun ContributionSheet(
     isArabic: Boolean,
     categoryId: String,
+    existingWord: Word? = null,
     onDismiss: () -> Unit,
     viewModel: AppViewModel
 ) {
     val context = LocalContext.current
 
-    var en by remember { mutableStateOf("") }
-    var ar by remember { mutableStateOf("") }
-    var tmz by remember { mutableStateOf("") }
-    var tif by remember { mutableStateOf("") }
-    var dialect by remember { mutableStateOf("Standard (IRCAM)") }
+    var en by remember { mutableStateOf(existingWord?.english ?: "") }
+    var ar by remember { mutableStateOf(existingWord?.arabic ?: "") }
+    var tmz by remember { mutableStateOf(existingWord?.tamazight ?: "") }
+    var tif by remember { mutableStateOf(existingWord?.tifinagh ?: "") }
+    var dialect by remember { mutableStateOf("Standard") }
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var audioUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
 
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> imageUri = uri }
-
-    val audioLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> audioUri = uri }
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri = it }
+    val audioLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { audioUri = it }
 
     Column(
         modifier = Modifier
@@ -58,21 +55,23 @@ fun ContributionSheet(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = if(isArabic) "ساهم في إغناء إيزم 🦁" else "Contribute to Izem 🦁",
+            text = if (existingWord != null)
+                (if(isArabic) "تصحيح الكلمة ✏️" else "Correct Word ✏️")
+            else (if(isArabic) "إضافة كلمة جديدة 🦁" else "Add New Word 🦁"),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Black
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
             value = tif,
             onValueChange = { tif = it },
-            label = { Text("Tifinagh") },
+            label = { Text("Tifinagh Script") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = tmz,
             onValueChange = { tmz = it },
@@ -80,27 +79,27 @@ fun ContributionSheet(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = ar,
             onValueChange = { ar = it },
-            label = { Text("Arabic") },
+            label = { Text(if(isArabic) "الترجمة العربية" else "Arabic Translation") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = en,
             onValueChange = { en = it },
-            label = { Text("English") },
+            label = { Text(if(isArabic) "الترجمة الإنجليزية" else "English Translation") },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = if(isArabic) "اختر اللهجة / المنطقة" else "Select Dialect",
+            text = if(isArabic) "المنطقة / اللهجة" else "Dialect / Region",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.align(Alignment.Start)
         )
@@ -120,7 +119,7 @@ fun ContributionSheet(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
@@ -131,7 +130,7 @@ fun ContributionSheet(
                     containerColor = if(imageUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text(if(imageUri != null) "✅ Image" else "📷 Photo")
+                Text(if(imageUri != null) "✅ Photo" else "📷 Photo")
             }
             Button(
                 onClick = { audioLauncher.launch("audio/*") },
@@ -141,7 +140,7 @@ fun ContributionSheet(
                     containerColor = if(audioUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text(if(audioUri != null) "✅ Audio" else "🎤 Voice")
+                Text(if(audioUri != null) "✅ Voice" else "🎤 Voice")
             }
         }
 
@@ -151,13 +150,16 @@ fun ContributionSheet(
             onClick = {
                 isUploading = true
                 val suggestion = Suggestion(
-                    type = "NEW",
+                    type = if (existingWord != null) "CORRECTION" else "NEW",
+                    wordId = existingWord?.id ?: "",
                     categoryId = categoryId,
                     dialect = dialect,
                     english = en,
                     arabic = ar,
                     tamazight = tmz,
-                    tifinagh = tif
+                    tifinagh = tif,
+                    imageUrl = existingWord?.imageUrl ?: "",
+                    audioUrl = existingWord?.audioUrl ?: ""
                 )
                 viewModel.submitSuggestion(
                     suggestion = suggestion,
@@ -165,7 +167,7 @@ fun ContributionSheet(
                     audioUri = audioUri,
                     onSuccess = {
                         isUploading = false
-                        Toast.makeText(context, "Thank you for your contribution! 🦁", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, if(isArabic) "شكراً لمساهمتك! سيتم مراجعة اقتراحك. 🦁" else "Thank you! Your suggestion is under review. 🦁", Toast.LENGTH_LONG).show()
                         onDismiss()
                     },
                     onError = { error ->
@@ -181,10 +183,10 @@ fun ContributionSheet(
             if (isUploading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text(if(isArabic) "إرسال للمراجعة" else "Submit for Review")
+                Text(if(isArabic) "إرسال للمراجعة" else "Submit for Review", fontWeight = FontWeight.Bold)
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
