@@ -65,6 +65,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             if (user != null) {
                 _isUserAnonymous.value = user.isAnonymous
                 startProfileListener(user.uid)
+
+                saveFcmToken()
             } else {
                 signInAnonymously()
             }
@@ -152,7 +154,21 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun finishQuizSession(scoreInSession: Int) {
         val uid = authRepo.currentUserId ?: return
         repo.saveQuizResult(uid, scoreInSession, 10)
-        repo.updateUserProgress(uid, scoreInSession) { /* Listener */ }
+        repo.updateUserProgress(uid, scoreInSession) { newTotalXP ->
+            val newLevel = getLevelName(newTotalXP)
+            repo.updateUserLevel(uid, newLevel)
+
+            // android.util.Log.d("IzemQuiz", "Updated! XP: $newTotalXP | Level: $newLevel")
+        }
+    }
+
+    private fun getLevelName(xp: Int): String {
+        return when {
+            xp < 100 -> "Izem Amezwaru"
+            xp < 500 -> "Izem Anlmad"
+            xp < 1000 -> "Izem Amqran"
+            else -> "Agellid n Izmawn"
+        }
     }
 
     fun listenWordsByCategory(categoryId: String) {
@@ -162,7 +178,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleLanguage() {
         val newValue = !_isArabic.value
-        viewModelScope.launch { settingsRepo.setArabic(newValue) }
+        viewModelScope.launch {
+            settingsRepo.setArabic(newValue)
+            authRepo.currentUserId?.let { uid ->
+                repo.updateUserLanguage(uid, newValue)
+            }
+        }
     }
 
     fun submitSuggestion(
@@ -201,6 +222,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 onError(e.message ?: "Error submitting")
             }
         }
+    }
+
+    fun saveFcmToken() {
+        com.google.firebase.messaging.FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token ->
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(1000)
+
+                    val uid = auth.currentUser?.uid
+                    if (uid != null && token != null) {
+                        repo.updateFcmToken(uid, token)
+                        repo.updateUserLanguage(uid, _isArabic.value)
+                        // android.util.Log.d("IzemFCM", "✅ TOKEN SYNCED WITH UID: $uid")
+                    } else {
+                        // android.util.Log.e("IzemFCM", "⚠️ Auth not ready yet or token null")
+                    }
+                }
+            }
     }
 
     override fun onCleared() {

@@ -204,4 +204,20 @@ class FirestoreRepo {
         }
     }
 
+    fun updateFcmToken(userId: String, token: String) {
+        val userRef = db.collection("users").document(userId)
+        val data = hashMapOf("fcmToken" to token)
+
+        userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
+                // android.util.Log.d("IzemFCM", "🔥 Firestore Document Created/Updated for: $userId")
+            }
+    }
+
+    fun updateUserLanguage(userId: String, isArabic: Boolean) {
+        val lang = if (isArabic) "ar" else "en"
+        db.collection("users").document(userId)
+            .set(mapOf("language" to lang), com.google.firebase.firestore.SetOptions.merge())
+    }
+
 }
