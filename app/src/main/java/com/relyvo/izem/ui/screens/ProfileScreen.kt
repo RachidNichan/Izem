@@ -5,6 +5,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -123,7 +124,7 @@ fun ProfileScreen(
         verticalArrangement = Arrangement.Top
     ) {
 
-        if (isAnonymous) {
+        AnimatedVisibility(visible = isAnonymous) {
             AccountUpgradeCard(
                 isArabic = isArabic,
                 isLoginMode = isLoginMode,

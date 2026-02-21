@@ -90,6 +90,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
             if (authRepo.linkAccount(credential)) {
+                _isUserAnonymous.value = auth.currentUser?.isAnonymous ?: false
                 onSuccess()
             } else {
                 onError("Account linking failed.")
@@ -106,6 +107,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             if (authRepo.linkAccount(credential)) {
                 authRepo.currentUser?.sendEmailVerification()
+                _isUserAnonymous.value = auth.currentUser?.isAnonymous ?: false
                 onSuccess()
             } else {
                 onError("Linking failed.")

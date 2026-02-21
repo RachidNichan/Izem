@@ -18,7 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.Word
 import com.relyvo.izem.viewmodel.AppViewModel
@@ -67,19 +69,28 @@ fun ContributionSheet(
         OutlinedTextField(
             value = tif,
             onValueChange = { tif = it },
-            label = { Text("Tifinagh Script") },
+            label = {
+                Text(if (isArabic) "كتابة تيفيناغ" else "Tifinagh Script")
+            },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Start)
         )
+
         Spacer(modifier = Modifier.height(12.dp))
+
         OutlinedTextField(
             value = tmz,
             onValueChange = { tmz = it },
-            label = { Text("Tamazight (Latin)") },
+            label = {
+                Text(if (isArabic) "تمازيغت (باللاتينية)" else "Tamazight (Latin)")
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
+
         Spacer(modifier = Modifier.height(12.dp))
+
         OutlinedTextField(
             value = ar,
             onValueChange = { ar = it },
@@ -110,18 +121,48 @@ fun ContributionSheet(
                 .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            listOf("Standard", "Souss", "Atlas", "Rif").forEach { d ->
+            val dialects = listOf(
+                "Standard",  // (IRCAM)
+                "Souss",     // (Tachelhit)
+                "Atlas",     // (Tamaziɣt)
+                "Rif",       // (Tarifit)
+                "Kabyle",    // (Taqbaylit)
+                "Chaoui",    // (Tacawit)
+                "Mozabite",  // (Tumzabt)
+                "Tuareg",    // (Tamahaq)
+                "Tunisian"   // (Chelha)
+            )
+
+            dialects.forEach { d ->
                 FilterChip(
                     selected = dialect == d,
                     onClick = { dialect = d },
-                    label = { Text(d) }
+                    label = {
+                        Text(
+                            text = when(d) {
+                                "Standard" -> if(isArabic) "معيارية" else "Standard"
+                                "Souss" -> if(isArabic) "سوس" else "Souss"
+                                "Atlas" -> if(isArabic) "أطلس" else "Atlas"
+                                "Rif" -> if(isArabic) "ريف" else "Rif"
+                                "Kabyle" -> if(isArabic) "قبائلية" else "Kabyle"
+                                "Chaoui" -> if(isArabic) "شاوية" else "Chaoui"
+                                "Mozabite" -> if(isArabic) "ميزابية" else "Mozabite"
+                                "Tuareg" -> if(isArabic) "طوارقية" else "Tuareg"
+                                "Tunisian" -> if(isArabic) "تونسية (شلحية)" else "Tunisian (Chelha)"
+                                else -> d
+                            }
+                        )
+                    }
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
                 onClick = { imageLauncher.launch("image/*") },
                 modifier = Modifier.weight(1f),
@@ -130,8 +171,13 @@ fun ContributionSheet(
                     containerColor = if(imageUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text(if(imageUri != null) "✅ Photo" else "📷 Photo")
+                val imageLabel = if (isArabic) "صورة" else "Photo"
+                Text(
+                    text = if(imageUri != null) "✅ $imageLabel" else "📷 $imageLabel",
+                    fontSize = 14.sp
+                )
             }
+
             Button(
                 onClick = { audioLauncher.launch("audio/*") },
                 modifier = Modifier.weight(1f),
@@ -140,7 +186,11 @@ fun ContributionSheet(
                     containerColor = if(audioUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                Text(if(audioUri != null) "✅ Voice" else "🎤 Voice")
+                val audioLabel = if (isArabic) "صوت" else "Voice"
+                Text(
+                    text = if(audioUri != null) "✅ $audioLabel" else "🎤 $audioLabel",
+                    fontSize = 14.sp
+                )
             }
         }
 
