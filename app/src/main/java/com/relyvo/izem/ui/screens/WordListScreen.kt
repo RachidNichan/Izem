@@ -167,16 +167,29 @@ fun WordItemUpgrade(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = word.tifinagh, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = word.tamazight, style = MaterialTheme.typography.bodyLarge, color = IzemBlue, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = word.tamazight.replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = IzemBlue,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp), tint = IzemBlue.copy(alpha = 0.6f))
                 }
             }
 
             Surface(color = IzemBlue.copy(alpha = 0.08f), shape = RoundedCornerShape(12.dp)) {
-                Text(text = if (isArabic) word.arabic else word.english, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Black, color = IzemBlue)
+                Text(
+                    text = if (isArabic) word.arabic else word.english.replaceFirstChar { it.uppercase() },
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Black,
+                    color = IzemBlue
+                )
             }
+
         }
     }
 }

@@ -110,7 +110,7 @@ fun ContributionSheet(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = if(isArabic) "المنطقة / اللهجة" else "Dialect / Region",
+            text = if(isArabic) "المنطقة / التنوع اللغوي" else "Variety / Region",
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.align(Alignment.Start)
         )

@@ -95,12 +95,16 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                                 unselectedTextColor = Color.Gray.copy(alpha = 0.6f)
                             ),
                             onClick = {
+                                val isLearnTab = screen == Screen.Categories
+
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                        saveState = !isLearnTab
                                     }
+
                                     launchSingleTop = true
-                                    restoreState = true
+
+                                    restoreState = !isLearnTab
                                 }
                             }
                         )
