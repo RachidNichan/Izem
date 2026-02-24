@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,12 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -34,6 +37,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relyvo.izem.viewmodel.AppViewModel
 import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.R
+import com.relyvo.izem.ui.theme.IzemOrange
 
 @Composable
 fun ProfileScreen(
@@ -205,6 +209,79 @@ fun ProfileScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+        Text(
+            text = if(isArabic) "إعدادات التنوع اللغوي" else "Preferred Variety",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Black,
+            modifier = Modifier.align(Alignment.Start).padding(start = 8.dp, bottom = 12.dp)
+        )
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                val currentVariety by viewModel.preferredVariety.collectAsState()
+
+                val varieties = listOf(
+                    "Standard",  // (IRCAM)
+                    "Souss",     // (Tachelhit)
+                    "Atlas",     // (Tamaziɣt)
+                    "Rif",       // (Tarifit)
+                    "Kabyle",    // (Taqbaylit)
+                    "Chaoui",    // (Tacawit)
+                    "Mozabite",  // (Tumzabt)
+                    "Tuareg",    // (Tamahaq)
+                    "Tunisian"   // (Chelha)
+                )
+
+                varieties.forEach { v ->
+                    val isSelected = currentVariety == v
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .clickable { viewModel.updateVariety(v) }
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = when(v) {
+                                "Standard" -> if(isArabic) "معيارية (IRCAM)" else "Standard (IRCAM)"
+                                "Souss" -> if(isArabic) "سوس" else "Souss"
+                                "Atlas" -> if(isArabic) "أطلس" else "Atlas"
+                                "Rif" -> if(isArabic) "ريف" else "Rif"
+                                "Kabyle" -> if(isArabic) "القبائل" else "Kabyle"
+                                "Chaoui" -> if(isArabic) "شاوية" else "Chaoui"
+                                "Mozabite" -> if(isArabic) "ميزابية" else "Mozabite"
+                                "Tuareg" -> if(isArabic) "طوارقية" else "Tuareg"
+                                "Tunisian" -> if(isArabic) "تونسية (شلحية)" else "Tunisian (Chelha)"
+                                else -> v
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = if (isSelected) FontWeight.Black else FontWeight.Medium,
+                            color = if (isSelected) IzemOrange else MaterialTheme.colorScheme.onSurface
+                        )
+                        if (isSelected) {
+                            Icon(Icons.Default.Check, contentDescription = null, tint = IzemOrange, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                    if (v != varieties.last()) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
 
         Text(
             text = if(isArabic) "استمر في التعلم لتصبح ملك الأسود!" else "Keep learning to become the King of Lions!",

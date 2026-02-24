@@ -6,5 +6,6 @@ data class UserProfile(
     val lastActive: com.google.firebase.Timestamp? = null,
     val learnedWords: List<String> = emptyList(),
     val learningDays: Int = 0,
-    val lastDateActive: String = ""
+    val lastDateActive: String = "",
+    val preferredVariety: String = "Standard"
 )

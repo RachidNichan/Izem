@@ -40,15 +40,14 @@ fun WordList(
     categoryId: String,
     wordList: List<Word>,
     isArabic: Boolean,
+    userDialect: String,
     onWordClick: (String) -> Unit,
     viewModel: AppViewModel,
     modifier: Modifier = Modifier
 ) {
     var showSheet by remember { mutableStateOf(false) }
     var selectedWordForCorrection by remember { mutableStateOf<Word?>(null) }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Scaffold(
         floatingActionButton = {
@@ -83,6 +82,7 @@ fun WordList(
                     WordItemUpgrade(
                         word = currentWord,
                         isArabic = isArabic,
+                        userDialect = userDialect,
                         onWordClick = onWordClick,
                         onCorrectClick = { word ->
                             selectedWordForCorrection = word
@@ -119,6 +119,7 @@ fun WordList(
 fun WordItemUpgrade(
     word: Word,
     isArabic: Boolean,
+    userDialect: String,
     onWordClick: (String) -> Unit,
     onCorrectClick: (Word) -> Unit
 ) {
@@ -139,6 +140,7 @@ fun WordItemUpgrade(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+
             IconButton(
                 onClick = { onCorrectClick(word) },
                 modifier = Modifier.size(32.dp)
@@ -154,18 +156,34 @@ fun WordItemUpgrade(
             Spacer(modifier = Modifier.width(4.dp))
 
             if (word.imageUrl.isNotEmpty()) {
-                Box(modifier = Modifier.size(70.dp).background(brush = Brush.linearGradient(colors = listOf(IzemBlue.copy(alpha = 0.15f), MaterialTheme.colorScheme.surface)), shape = RoundedCornerShape(20.dp)).clip(RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.size(70.dp).background(brush = Brush.linearGradient(colors = listOf(IzemBlue.copy(alpha = 0.15f), MaterialTheme.colorScheme.surface)), shape = RoundedCornerShape(16.dp)).clip(RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
                     AsyncImage(model = ImageRequest.Builder(context).data(word.imageUrl).crossfade(true).build(), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 }
             } else {
-                Box(modifier = Modifier.size(70.dp).background(IzemBlue.copy(alpha = 0.1f), RoundedCornerShape(20.dp)), contentAlignment = Alignment.Center) {
-                    Text(text = word.tifinagh.take(1), style = MaterialTheme.typography.headlineMedium, color = IzemBlue, fontWeight = FontWeight.Black)
+                Box(modifier = Modifier.size(70.dp).background(IzemBlue.copy(alpha = 0.1f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                    Text(text = word.tifinagh.take(1), style = MaterialTheme.typography.headlineSmall, color = IzemBlue, fontWeight = FontWeight.Black)
                 }
             }
 
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                if (userDialect != "Standard" && word.dialect == "Standard") {
+                    Surface(
+                        color = Color.Gray.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    ) {
+                        Text(
+                            text = if(isArabic) "معيارية" else "Standard",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
+                            fontSize = 8.sp
+                        )
+                    }
+                }
+
                 Text(text = word.tifinagh, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -189,7 +207,6 @@ fun WordItemUpgrade(
                     color = IzemBlue
                 )
             }
-
         }
     }
 }

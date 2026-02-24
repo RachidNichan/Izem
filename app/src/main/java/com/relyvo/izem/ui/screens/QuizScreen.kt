@@ -44,8 +44,7 @@ fun QuizScreen(
     onBackToMenu: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val allWords by viewModel.allWords.collectAsState()
-    val quizWords = remember(allWords) { allWords.filter { it.categoryId != "alphabet" } }
+    val quizWords by viewModel.allWords.collectAsState()
 
     // Loading State
     if (quizWords.isEmpty()) {
@@ -65,9 +64,25 @@ fun QuizScreen(
     val totalQuestions = 10
     var isGameOver by rememberSaveable { mutableStateOf(false) }
     var selectedAnswer by remember { mutableStateOf<Word?>(null) }
+    var isCorrect by remember { mutableStateOf(false) }
 
     // Animations
     val progress by animateFloatAsState(targetValue = questionCount.toFloat() / totalQuestions)
+
+    LaunchedEffect(selectedAnswer) {
+        if (selectedAnswer != null && isCorrect) {
+            kotlinx.coroutines.delay(1500)
+
+            if (questionCount < totalQuestions) {
+                questionCount++
+                currentWord = quizWords.random()
+                selectedAnswer = null
+                isCorrect = false
+            } else {
+                (context as? Activity)?.let { InterstitialAdManager.showInterstitial(it) { isGameOver = true } }
+            }
+        }
+    }
 
     if (isGameOver) {
         QuizResultUI(
@@ -136,20 +151,24 @@ fun QuizScreen(
                 // Options
                 options.forEach { option ->
                     val isSelected = selectedAnswer == option
-                    val isCorrect = option == currentWord
+                    val isTarget = option == currentWord
 
                     QuizOption(
                         option = option,
                         isSelected = isSelected,
-                        isCorrect = isCorrect,
+                        isCorrect = isTarget,
                         reveal = selectedAnswer != null,
                         onClick = {
                             if (selectedAnswer == null) {
                                 selectedAnswer = option
-                                val correct = option == currentWord
-                                val sound = if (correct) "correct" else "wrong"
-                                Utils.getAudioId(context, sound).takeIf { it != 0 }?.let { MediaPlayer.create(context, it).start() }
-                                if (correct) score += 10
+                                isCorrect = (option == currentWord)
+
+                                if (isCorrect) {
+                                    score += 10
+                                    com.relyvo.izem.utils.SmartAudioPlayer.playAudio(context, option.audioUrl, option.id)
+                                } else {
+                                    Utils.getAudioId(context, "wrong").takeIf { it != 0 }?.let { MediaPlayer.create(context, it).start() }
+                                }
                             }
                         }
                     )
@@ -159,7 +178,10 @@ fun QuizScreen(
                 Spacer(modifier = Modifier.weight(1f))
 
                 // Next Button
-                AnimatedVisibility(visible = selectedAnswer != null, enter = scaleIn() + fadeIn()) {
+                AnimatedVisibility(
+                    visible = selectedAnswer != null && (!isCorrect || questionCount == totalQuestions),
+                    enter = scaleIn() + fadeIn()
+                ) {
                     Button(
                         onClick = {
                             if (questionCount < totalQuestions) {
@@ -200,10 +222,24 @@ fun QuizOption(option: Word, isSelected: Boolean, isCorrect: Boolean, reveal: Bo
         border = BorderStroke(2.dp, if (isSelected && !reveal) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         tonalElevation = 2.dp
     ) {
-        Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(text = "${option.tamazight} (${option.tifinagh})", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = contentColor)
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "${option.tamazight.uppercase()} (${option.tifinagh})",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+
             if (reveal) {
-                Icon(imageVector = if (isCorrect) Icons.Default.CheckCircle else Icons.Default.Close, contentDescription = null, tint = Color.White)
+                Icon(
+                    imageVector = if (isCorrect) Icons.Default.CheckCircle else Icons.Default.Close,
+                    contentDescription = null,
+                    tint = Color.White
+                )
             }
         }
     }

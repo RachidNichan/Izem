@@ -43,8 +43,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUserAnonymous = MutableStateFlow(true)
     val isUserAnonymous = _isUserAnonymous.asStateFlow()
 
+    private val _preferredVariety = MutableStateFlow("Standard")
+    val preferredVariety = _preferredVariety.asStateFlow()
+
     // --- Listeners ---
     private var wordsListener: ListenerRegistration? = null
+    private var allWordsListener: ListenerRegistration? = null
     private var profileListener: ListenerRegistration? = null
 
     init {
@@ -54,8 +58,19 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             settingsRepo.isArabic.collect { _isArabic.value = it }
         }
 
+        viewModelScope.launch {
+            settingsRepo.preferredVariety.collect { _preferredVariety.value = it }
+        }
+
+        viewModelScope.launch {
+            settingsRepo.preferredVariety.collect { savedVariety ->
+                _preferredVariety.value = savedVariety
+
+                startListeningToAllWords(savedVariety)
+            }
+        }
+
         repo.listenCategories { _categories.value = it }
-        repo.listenAllWords { _allWords.value = it }
     }
 
     private fun observeUserStatus() {
@@ -173,9 +188,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun startListeningToAllWords(variety: String) {
+        allWordsListener?.remove()
+        allWordsListener = repo.listenAllWords(variety) { list ->
+            _allWords.value = list
+        }
+    }
+
     fun listenWordsByCategory(categoryId: String) {
         wordsListener?.remove()
-        wordsListener = repo.listenWordsByCategory(categoryId) { _currentWords.value = it }
+
+        val currentVariety = _preferredVariety.value
+        wordsListener = repo.listenWordsByCategory(categoryId, currentVariety) { _currentWords.value = it }
     }
 
     fun toggleLanguage() {
@@ -244,9 +268,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
+    fun updateVariety(newVariety: String) {
+        _preferredVariety.value = newVariety
+
+        startListeningToAllWords(newVariety)
+
+        viewModelScope.launch {
+            settingsRepo.setVariety(newVariety)
+
+            authRepo.currentUserId?.let { uid ->
+                repo.updateUserVariety(uid, newVariety)
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         wordsListener?.remove()
         profileListener?.remove()
+        allWordsListener?.remove()
     }
 }

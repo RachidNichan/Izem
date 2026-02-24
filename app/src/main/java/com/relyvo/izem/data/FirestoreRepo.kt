@@ -37,6 +37,7 @@ class FirestoreRepo {
 
     fun listenWordsByCategory(
         categoryId: String,
+        preferredVariety: String,
         onResult: (List<Word>) -> Unit
     ): ListenerRegistration {
 
@@ -48,28 +49,64 @@ class FirestoreRepo {
                     onResult(emptyList())
                     return@addSnapshotListener
                 }
+
                 if (snapshot != null) {
-                    val list = snapshot.documents.mapNotNull { doc ->
+                    val allWordsInCat = snapshot.documents.mapNotNull { doc ->
                         doc.toObject<Word>()?.copy(id = doc.id)
                     }
-                    onResult(list)
+
+                    val filteredList = mutableListOf<Word>()
+
+                    val wordsGroupedByMeaning = allWordsInCat.groupBy { it.english }
+
+                    for ((_, variations) in wordsGroupedByMeaning) {
+                        val preferredWord = variations.find { it.dialect == preferredVariety }
+
+                        if (preferredWord != null) {
+                            filteredList.add(preferredWord)
+                        } else {
+                            val standardWord = variations.find { it.dialect == "Standard" }
+                            if (standardWord != null) filteredList.add(standardWord)
+                            else if (variations.isNotEmpty()) filteredList.add(variations.first())
+                        }
+                    }
+
+                    onResult(filteredList)
                 }
             }
     }
 
     fun listenAllWords(
+        preferredVariety: String,
         onResult: (List<Word>) -> Unit
-    ) {
-        db.collection("words")
-            .addSnapshotListener { snapshot, error ->
+    ): ListenerRegistration {
 
+        return db.collection("words")
+            .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
                     return@addSnapshotListener
                 }
 
                 if (snapshot != null) {
-                    onResult(snapshot.toObjects())
+                    val allWordsRaw = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject<Word>()?.copy(id = doc.id)
+                    }.filter { it.categoryId != "alphabet" }
+
+                    val filteredList = mutableListOf<Word>()
+                    val wordsGrouped = allWordsRaw.groupBy { it.english }
+
+                    for ((_, variations) in wordsGrouped) {
+                        val targetWord = variations.find { it.dialect == preferredVariety }
+                            ?: variations.find { it.dialect == "Standard" }
+                            ?: variations.firstOrNull()
+
+                        if (targetWord != null) {
+                            filteredList.add(targetWord)
+                        }
+                    }
+
+                    onResult(filteredList)
                 }
             }
     }
@@ -218,6 +255,20 @@ class FirestoreRepo {
         val lang = if (isArabic) "ar" else "en"
         db.collection("users").document(userId)
             .set(mapOf("language" to lang), com.google.firebase.firestore.SetOptions.merge())
+    }
+
+    fun updateUserVariety(userId: String, variety: String) {
+        val userRef = db.collection("users").document(userId)
+
+        val data = mapOf("preferredVariety" to variety)
+
+        userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+            .addOnSuccessListener {
+                // android.util.Log.d("IzemSettings", "✅ variety updated to $variety for user $userId")
+            }
+            .addOnFailureListener { e ->
+                // android.util.Log.e("IzemSettings", "❌ Failed to update variety", e)
+            }
     }
 
 }
