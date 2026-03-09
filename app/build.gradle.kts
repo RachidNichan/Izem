@@ -12,8 +12,8 @@ android {
         applicationId = "com.relyvo.izem"
         minSdk = 24
         targetSdk = 35
-        versionCode = 14
-        versionName = "4.0.2"
+        versionCode = 16
+        versionName = "4.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

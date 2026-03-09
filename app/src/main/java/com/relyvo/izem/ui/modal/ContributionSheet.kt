@@ -192,9 +192,22 @@ fun ContributionSheet(
                     fontSize = 14.sp
                 )
             }
+
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        val isAudioValid = audioUri != null
+
+        if (!isAudioValid) {
+            Text(
+                text = if (isArabic) "⚠️ يرجى إضافة تسجيل صوتي للكلمة" else "⚠️ Please add an audio recording",
+                color = Color.Red,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
 
         Button(
             onClick = {
@@ -209,7 +222,7 @@ fun ContributionSheet(
                     tamazight = tmz,
                     tifinagh = tif,
                     imageUrl = existingWord?.imageUrl ?: "",
-                    audioUrl = existingWord?.audioUrl ?: ""
+                    audioUrl = ""
                 )
                 viewModel.submitSuggestion(
                     suggestion = suggestion,
@@ -226,7 +239,7 @@ fun ContributionSheet(
                     }
                 )
             },
-            enabled = !isUploading && tif.isNotEmpty(),
+            enabled = !isUploading && tif.isNotEmpty() && isAudioValid,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp)
         ) {

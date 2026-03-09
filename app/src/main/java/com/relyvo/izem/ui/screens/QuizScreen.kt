@@ -23,11 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,38 +44,65 @@ fun QuizScreen(
     onBackToMenu: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val quizWords by viewModel.allWords.collectAsState()
 
     // Loading State
-    if (quizWords.isEmpty()) {
+    val quizWordsBase by viewModel.allWords.collectAsState()
+
+    if (quizWordsBase.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(strokeWidth = 5.dp)
         }
         return
     }
 
-    // State Management
-    var currentWord by remember { mutableStateOf(quizWords.random()) }
-    var options by remember(currentWord) {
-        mutableStateOf((listOf(currentWord) + quizWords.filter { it != currentWord }.shuffled().take(3)).shuffled())
+    val totalQuestions = 10
+
+    var quizSessionWords by remember {
+        mutableStateOf(quizWordsBase.shuffled().take(totalQuestions))
     }
+
     var score by rememberSaveable { mutableIntStateOf(0) }
     var questionCount by rememberSaveable { mutableIntStateOf(1) }
-    val totalQuestions = 10
     var isGameOver by rememberSaveable { mutableStateOf(false) }
+
+    var currentWord by remember(questionCount, quizSessionWords) {
+        mutableStateOf(quizSessionWords[questionCount - 1])
+    }
+
+    var options by remember(currentWord) {
+        mutableStateOf(
+            (listOf(currentWord) + quizWordsBase.filter { it != currentWord }.shuffled().take(3))
+                .shuffled()
+        )
+    }
+
     var selectedAnswer by remember { mutableStateOf<Word?>(null) }
     var isCorrect by remember { mutableStateOf(false) }
 
-    // Animations
+    val scrollState = rememberScrollState()
     val progress by animateFloatAsState(targetValue = questionCount.toFloat() / totalQuestions)
+
+    val reviewManager = remember { ReviewManagerFactory.create(context) }
+
+    fun showReviewDialog() {
+        val request = reviewManager.requestReviewFlow()
+        request.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val reviewInfo = task.result
+                val activity = context as? Activity
+                activity?.let {
+                    reviewManager.launchReviewFlow(it, reviewInfo)
+                }
+            }
+        }
+    }
 
     LaunchedEffect(selectedAnswer) {
         if (selectedAnswer != null && isCorrect) {
-            kotlinx.coroutines.delay(1500)
+            kotlinx.coroutines.delay(1500) // Delay auto-next on correct answer
 
             if (questionCount < totalQuestions) {
                 questionCount++
-                currentWord = quizWords.random()
                 selectedAnswer = null
                 isCorrect = false
             } else {
@@ -91,20 +118,19 @@ fun QuizScreen(
             isArabic = isArabic,
             onShare = { shareResult(context, score, isArabic) },
             onPlayAgain = {
+                quizSessionWords = quizWordsBase.shuffled().take(totalQuestions)
                 score = 0
                 questionCount = 1
                 isGameOver = false
-                currentWord = quizWords.random()
                 selectedAnswer = null
+                isCorrect = false
             },
             onExit = onBackToMenu
         )
 
         LaunchedEffect(Unit) {
             viewModel.finishQuizSession(score)
-            ReviewManagerFactory.create(context).requestReviewFlow().addOnCompleteListener { task ->
-                if (task.isSuccessful) (context as? Activity)?.let { ReviewManagerFactory.create(context).launchReviewFlow(it, task.result) }
-            }
+            showReviewDialog()
         }
     } else {
         Scaffold(
@@ -186,7 +212,6 @@ fun QuizScreen(
                         onClick = {
                             if (questionCount < totalQuestions) {
                                 questionCount++
-                                currentWord = quizWords.random()
                                 selectedAnswer = null
                             } else {
                                 (context as? Activity)?.let { InterstitialAdManager.showInterstitial(it) { isGameOver = true } }
@@ -282,7 +307,6 @@ fun QuizResultUI(score: Int, total: Int, isArabic: Boolean, onShare: () -> Unit,
     }
 }
 
-// Global functions remain the same (shareResult, sendFeedback)
 fun shareResult(context: android.content.Context, score: Int, isArabic: Boolean) {
     val appLink = "https://play.google.com/store/apps/details?id=com.relyvo.izem"
     val message = if (isArabic) "لقد حصلت على ${score} نقطة في تطبيق إيزم (Izem)! 🦁✨\n$appLink" else "I just scored ${score} XP in Izem App! 🦁\n$appLink"
