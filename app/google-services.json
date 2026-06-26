@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "360506682366-dvlj1j4494ju6q8rftfkq5dk4ablfhvu.apps.googleusercontent.com",
+          "client_id": "360506682366-8urlcmtiltrgsf2lk2crl9fc9j0hoiu1.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.relyvo.izem",
-            "certificate_hash": "e5a144691bbb0d9db6e80d2cef7d3373888d8fc8"
+            "certificate_hash": "2877c3218af68e0eeb313859976d7a66073ce38a"
           }
         },
         {

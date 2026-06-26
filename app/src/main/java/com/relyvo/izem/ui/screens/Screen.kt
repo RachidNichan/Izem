@@ -1,6 +1,5 @@
-package com.relyvo.izem.ui.screens
-
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
@@ -13,6 +12,8 @@ sealed class Screen(val route: String, val title: String, val titleAr: String, v
     object WordList : Screen("word_list/{categoryId}", "Words", "كلمات", null)
 
     object Quiz : Screen("quiz", "Quiz", "اختبار", Icons.Filled.Star)
+
+    object Grammar : Screen("grammar", "Grammar", "قواعد", Icons.AutoMirrored.Filled.MenuBook)
 
     object Profile : Screen("profile", "Profile", "حسابي", Icons.Filled.Person)
 }

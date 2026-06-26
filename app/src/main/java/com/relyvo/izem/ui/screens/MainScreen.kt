@@ -33,7 +33,6 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
     val isArabic by viewModel.isArabic.collectAsState()
-    val currentVariety by viewModel.preferredVariety.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.trackVisit()
@@ -42,6 +41,7 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
     val bottomNavItems = listOf(
         Screen.Categories,
         Screen.Quiz,
+        Screen.Grammar,
         Screen.Profile
     )
 
@@ -156,7 +156,6 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                                     categoryId = categoryId,
                                     wordList = currentWords,
                                     isArabic = isArabic,
-                                    userDialect = currentVariety,
                                     onWordClick = { wordId -> viewModel.onWordClicked(wordId) },
                                     viewModel = viewModel
                                 )
@@ -194,6 +193,13 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                                     navController.navigate(Screen.Categories.route)
                                 }
                             }
+                        )
+                    }
+
+                    composable(Screen.Grammar.route) {
+                        GrammarScreen(
+                            isArabic = isArabic,
+                            viewModel = viewModel
                         )
                     }
 

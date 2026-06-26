@@ -1,16 +1,25 @@
 [versions]
-agp = "8.13.2"
-kotlin = "1.9.24"
-coreKtx = "1.15.0"
+agp = "9.2.1"
+kotlin = "2.2.10"
+coreKtx = "1.19.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-lifecycleRuntimeKtx = "2.8.7"
-activityCompose = "1.9.3"
-composeBom = "2024.09.00"
+lifecycleRuntimeKtx = "2.11.0"
+activityCompose = "1.13.0"
+composeBom = "2024.12.01"
 googleGmsGoogleServices = "4.4.2"
-coil = "2.6.0"
+coil = "2.7.0"
 firebaseStorageKtx = "22.0.1"
+navigationCompose = "2.9.8"
+splashscreen = "1.2.0"
+work = "2.11.2"
+playServicesAuth = "21.6.0"
+coroutinesPlayServices = "1.11.0"
+firebaseBom = "34.15.0"
+datastore = "1.2.1"
+ads = "25.4.0"
+fragment = "1.8.9"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -27,18 +36,27 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
+androidx-activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activityCompose" }
+androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutinesPlayServices" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 play-review = { group = "com.google.android.play", name = "review-ktx", version = "2.0.2" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
-firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version = "25.1.1" }
-google-ads = { group = "com.google.android.gms", name = "play-services-ads", version = "23.6.0" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+google-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "ads" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
-firebase-auth = { group = "com.google.firebase", name = "firebase-auth", version = "23.0.0" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version = "1.0.0" }
+androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 

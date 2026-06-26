@@ -6,6 +6,16 @@ val IzemOrange = Color(0xFFFF8F00) // Brand & Quiz
 val IzemOrangeContainer = Color(0xFFFFF3E0)
 val OnIzemOrangeContainer = Color(0xFFE65100)
 
+// Grammar Section (Light Mode)
+val IzemGreen = Color(0xFF2E7D32)
+val GrammarContainer = Color(0xFFE8F5E9)
+val OnGrammarContainer = Color(0xFF1B5E20)
+
+// Grammar Section (Dark Mode)
+val IzemGreenDark = Color(0xFF4CAF50)
+val GrammarContainerDark = Color(0xFF1E2E22)
+val OnGrammarContainerDark = Color(0xFFA5D6A7)
+
 val IzemAmber = Color(0xFFFFC107)
 val IzemAmberContainer = Color(0xFFFFF8E1)
 

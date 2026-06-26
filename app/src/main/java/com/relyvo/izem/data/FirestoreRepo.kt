@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.google.firebase.storage.FirebaseStorage
+import com.relyvo.izem.model.Phrase
+import com.relyvo.izem.model.Verb
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepo {
@@ -37,13 +39,11 @@ class FirestoreRepo {
 
     fun listenWordsByCategory(
         categoryId: String,
-        preferredVariety: String,
         onResult: (List<Word>) -> Unit
     ): ListenerRegistration {
-
         return db.collection("words")
             .whereEqualTo("categoryId", categoryId)
-            .orderBy("createdAt", Query.Direction.ASCENDING)
+            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
@@ -51,36 +51,17 @@ class FirestoreRepo {
                 }
 
                 if (snapshot != null) {
-                    val allWordsInCat = snapshot.documents.mapNotNull { doc ->
+                    val list = snapshot.documents.mapNotNull { doc ->
                         doc.toObject<Word>()?.copy(id = doc.id)
                     }
-
-                    val filteredList = mutableListOf<Word>()
-
-                    val wordsGroupedByMeaning = allWordsInCat.groupBy { it.english }
-
-                    for ((_, variations) in wordsGroupedByMeaning) {
-                        val preferredWord = variations.find { it.dialect == preferredVariety }
-
-                        if (preferredWord != null) {
-                            filteredList.add(preferredWord)
-                        } else {
-                            val standardWord = variations.find { it.dialect == "Standard" }
-                            if (standardWord != null) filteredList.add(standardWord)
-                            else if (variations.isNotEmpty()) filteredList.add(variations.first())
-                        }
-                    }
-
-                    onResult(filteredList)
+                    onResult(list)
                 }
             }
     }
 
     fun listenAllWords(
-        preferredVariety: String,
         onResult: (List<Word>) -> Unit
     ): ListenerRegistration {
-
         return db.collection("words")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -89,24 +70,11 @@ class FirestoreRepo {
                 }
 
                 if (snapshot != null) {
-                    val allWordsRaw = snapshot.documents.mapNotNull { doc ->
+                    val list = snapshot.documents.mapNotNull { doc ->
                         doc.toObject<Word>()?.copy(id = doc.id)
                     }.filter { it.categoryId != "alphabet" }
 
-                    val filteredList = mutableListOf<Word>()
-                    val wordsGrouped = allWordsRaw.groupBy { it.english }
-
-                    for ((_, variations) in wordsGrouped) {
-                        val targetWord = variations.find { it.dialect == preferredVariety }
-                            ?: variations.find { it.dialect == "Standard" }
-                            ?: variations.firstOrNull()
-
-                        if (targetWord != null) {
-                            filteredList.add(targetWord)
-                        }
-                    }
-
-                    onResult(filteredList)
+                    onResult(list)
                 }
             }
     }
@@ -257,17 +225,56 @@ class FirestoreRepo {
             .set(mapOf("language" to lang), com.google.firebase.firestore.SetOptions.merge())
     }
 
-    fun updateUserVariety(userId: String, variety: String) {
-        val userRef = db.collection("users").document(userId)
+    // 🔹 1. Listen to Phrases (Realtime)
+    fun listenPhrases(
+        categoryId: String? = null, // Optional filter by category (e.g., "market")
+        onResult: (List<Phrase>) -> Unit
+    ): ListenerRegistration {
 
-        val data = mapOf("preferredVariety" to variety)
+        var query: com.google.firebase.firestore.Query = db.collection("phrases")
 
-        userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
-            .addOnSuccessListener {
-                // android.util.Log.d("IzemSettings", "✅ variety updated to $variety for user $userId")
+        // If a category is provided, filter the phrases
+        if (categoryId != null) {
+            query = query.whereEqualTo("categoryId", categoryId)
+        }
+
+        return query.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                println("❌ Error listening to phrases: ${error.message}")
+                onResult(emptyList())
+                return@addSnapshotListener
             }
-            .addOnFailureListener { e ->
-                // android.util.Log.e("IzemSettings", "❌ Failed to update variety", e)
+
+            if (snapshot != null) {
+                val list = snapshot.toObjects(Phrase::class.java)
+                // Optional: Sort by ID or a specific 'order' field if you have one
+                onResult(list.sortedBy { it.id })
+            } else {
+                onResult(emptyList())
+            }
+        }
+    }
+
+    // 🔹 2. Listen to Verbs (Realtime)
+    fun listenVerbs(
+        onResult: (List<Verb>) -> Unit
+    ): ListenerRegistration {
+
+        return db.collection("verbs")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    println("❌ Error listening to verbs: ${error.message}")
+                    onResult(emptyList())
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val list = snapshot.toObjects(Verb::class.java)
+                    // Sort alphabetically by English infinitive (or any other field)
+                    onResult(list.sortedBy { it.infinitiveEn })
+                } else {
+                    onResult(emptyList())
+                }
             }
     }
 

@@ -10,8 +10,10 @@ import com.relyvo.izem.data.AuthRepo
 import com.relyvo.izem.data.FirestoreRepo
 import com.relyvo.izem.data.SettingsRepo
 import com.relyvo.izem.model.Category
+import com.relyvo.izem.model.Phrase
 import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
+import com.relyvo.izem.model.Verb
 import com.relyvo.izem.model.Word
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,13 +45,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUserAnonymous = MutableStateFlow(true)
     val isUserAnonymous = _isUserAnonymous.asStateFlow()
 
-    private val _preferredVariety = MutableStateFlow("Standard")
-    val preferredVariety = _preferredVariety.asStateFlow()
-
     // --- Listeners ---
     private var wordsListener: ListenerRegistration? = null
     private var allWordsListener: ListenerRegistration? = null
     private var profileListener: ListenerRegistration? = null
+
+    // 🔹 Grammar State: Phrases
+    private val _phrases = MutableStateFlow<List<Phrase>>(emptyList())
+    val phrases = _phrases.asStateFlow()
+
+    // 🔹 Grammar State: Verbs
+    private val _verbs = MutableStateFlow<List<Verb>>(emptyList())
+    val verbs = _verbs.asStateFlow()
+
+    // Listeners to prevent memory leaks
+    private var phrasesListener: ListenerRegistration? = null
+    private var verbsListener: ListenerRegistration? = null
 
     init {
         observeUserStatus()
@@ -58,19 +69,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             settingsRepo.isArabic.collect { _isArabic.value = it }
         }
 
-        viewModelScope.launch {
-            settingsRepo.preferredVariety.collect { _preferredVariety.value = it }
-        }
-
-        viewModelScope.launch {
-            settingsRepo.preferredVariety.collect { savedVariety ->
-                _preferredVariety.value = savedVariety
-
-                startListeningToAllWords(savedVariety)
-            }
-        }
-
         repo.listenCategories { _categories.value = it }
+
+        allWordsListener?.remove()
+        allWordsListener = repo.listenAllWords { list ->
+            _allWords.value = list
+        }
+
+        listenToVerbs()
+        listenToPhrases()
     }
 
     private fun observeUserStatus() {
@@ -188,18 +195,25 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun startListeningToAllWords(variety: String) {
-        allWordsListener?.remove()
-        allWordsListener = repo.listenAllWords(variety) { list ->
-            _allWords.value = list
+    fun listenWordsByCategory(categoryId: String) {
+        wordsListener?.remove()
+        wordsListener = repo.listenWordsByCategory(categoryId) { _currentWords.value = it }
+    }
+
+    // 🔹 Fetch Phrases
+    fun listenToPhrases(categoryId: String? = null) {
+        phrasesListener?.remove() // Stop old listener
+        phrasesListener = repo.listenPhrases(categoryId) { list ->
+            _phrases.value = list
         }
     }
 
-    fun listenWordsByCategory(categoryId: String) {
-        wordsListener?.remove()
-
-        val currentVariety = _preferredVariety.value
-        wordsListener = repo.listenWordsByCategory(categoryId, currentVariety) { _currentWords.value = it }
+    // 🔹 Fetch Verbs
+    fun listenToVerbs() {
+        verbsListener?.remove() // Stop old listener
+        verbsListener = repo.listenVerbs { list ->
+            _verbs.value = list
+        }
     }
 
     fun toggleLanguage() {
@@ -268,24 +282,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
     }
 
-    fun updateVariety(newVariety: String) {
-        _preferredVariety.value = newVariety
-
-        startListeningToAllWords(newVariety)
-
-        viewModelScope.launch {
-            settingsRepo.setVariety(newVariety)
-
-            authRepo.currentUserId?.let { uid ->
-                repo.updateUserVariety(uid, newVariety)
-            }
-        }
-    }
-
     override fun onCleared() {
         super.onCleared()
         wordsListener?.remove()
         profileListener?.remove()
         allWordsListener?.remove()
+        phrasesListener?.remove() // NEW
+        verbsListener?.remove()   // NEW
     }
 }

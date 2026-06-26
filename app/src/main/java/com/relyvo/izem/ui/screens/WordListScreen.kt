@@ -40,7 +40,6 @@ fun WordList(
     categoryId: String,
     wordList: List<Word>,
     isArabic: Boolean,
-    userDialect: String,
     onWordClick: (String) -> Unit,
     viewModel: AppViewModel,
     modifier: Modifier = Modifier
@@ -82,7 +81,6 @@ fun WordList(
                     WordItemUpgrade(
                         word = currentWord,
                         isArabic = isArabic,
-                        userDialect = userDialect,
                         onWordClick = onWordClick,
                         onCorrectClick = { word ->
                             selectedWordForCorrection = word
@@ -119,7 +117,6 @@ fun WordList(
 fun WordItemUpgrade(
     word: Word,
     isArabic: Boolean,
-    userDialect: String,
     onWordClick: (String) -> Unit,
     onCorrectClick: (Word) -> Unit
 ) {
@@ -168,21 +165,6 @@ fun WordItemUpgrade(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                if (userDialect != "Standard" && word.dialect == "Standard") {
-                    Surface(
-                        color = Color.Gray.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    ) {
-                        Text(
-                            text = if(isArabic) "معيارية" else "Standard",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            fontSize = 8.sp
-                        )
-                    }
-                }
 
                 Text(text = word.tifinagh, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.onSurface)
 

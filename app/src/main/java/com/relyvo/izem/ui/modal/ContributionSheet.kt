@@ -109,56 +109,6 @@ fun ContributionSheet(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = if(isArabic) "المنطقة / التنوع اللغوي" else "Variety / Region",
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            val dialects = listOf(
-                "Standard",  // (IRCAM)
-                "Souss",     // (Tachelhit)
-                "Atlas",     // (Tamaziɣt)
-                "Rif",       // (Tarifit)
-                "Kabyle",    // (Taqbaylit)
-                "Chaoui",    // (Tacawit)
-                "Mozabite",  // (Tumzabt)
-                "Tuareg",    // (Tamahaq)
-                "Tunisian"   // (Chelha)
-            )
-
-            dialects.forEach { d ->
-                FilterChip(
-                    selected = dialect == d,
-                    onClick = { dialect = d },
-                    label = {
-                        Text(
-                            text = when(d) {
-                                "Standard" -> if(isArabic) "معيارية" else "Standard"
-                                "Souss" -> if(isArabic) "سوس" else "Souss"
-                                "Atlas" -> if(isArabic) "أطلس" else "Atlas"
-                                "Rif" -> if(isArabic) "ريف" else "Rif"
-                                "Kabyle" -> if(isArabic) "قبائلية" else "Kabyle"
-                                "Chaoui" -> if(isArabic) "شاوية" else "Chaoui"
-                                "Mozabite" -> if(isArabic) "ميزابية" else "Mozabite"
-                                "Tuareg" -> if(isArabic) "طوارقية" else "Tuareg"
-                                "Tunisian" -> if(isArabic) "تونسية (شلحية)" else "Tunisian (Chelha)"
-                                else -> d
-                            }
-                        )
-                    }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
