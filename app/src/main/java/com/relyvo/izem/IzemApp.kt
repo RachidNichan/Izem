@@ -33,8 +33,6 @@ class IzemApp : Application() {
 
         createNotificationChannel()
 
-        scheduleReminder()
-
         com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("all_users")
 
         syncFcmToken()
@@ -89,8 +87,11 @@ class IzemApp : Application() {
     }
 
     fun scheduleReminder() {
+        val delay = 24L
+        val unit = TimeUnit.HOURS
+
         val workRequest = OneTimeWorkRequestBuilder<ReminderWorker>()
-            .setInitialDelay(24, TimeUnit.HOURS)
+            .setInitialDelay(delay, unit)
             .addTag("izem_reminder")
             .build()
 

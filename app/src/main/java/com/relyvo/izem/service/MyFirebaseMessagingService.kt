@@ -4,12 +4,22 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.core.app.NotificationCompat
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.relyvo.izem.MainActivity
 import com.relyvo.izem.R
+import com.relyvo.izem.data.FirestoreRepo
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
+
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            FirestoreRepo().updateFcmToken(currentUser.uid, token)
+        }
+    }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         remoteMessage.notification?.let {

@@ -98,6 +98,11 @@ fun QuizScreen(
                     is QuizQuestion.ImageQuestion -> currentQuestion.word
                     is QuizQuestion.SpellingQuestion -> currentQuestion.word
                 }
+                Utils.getAudioId(context, "correct").takeIf { it != 0 }?.let {
+                    SmartAudioPlayer.playRawAudio(context, it)
+                }
+
+                kotlinx.coroutines.delay(300)
                 SmartAudioPlayer.playAudio(context, word.audioUrl, word.id)
             } else {
                 Utils.getAudioId(context, "wrong").takeIf { it != 0 }?.let {
@@ -116,7 +121,7 @@ fun QuizScreen(
 
     if (quizState.isCompleted) {
         QuizResultUI(
-            score = quizState.score * 10, // تحويل الإجابات الصحيحة إلى نقاط XP (كل إجابة بـ 10 نقاط)
+            score = quizState.score * 10,
             total = totalQuestions * 10,
             onShare = { shareResult(context, quizState.score * 10, isArabic) },
             onPlayAgain = {
@@ -126,6 +131,10 @@ fun QuizScreen(
         )
 
         LaunchedEffect(Unit) {
+            Utils.getAudioId(context, "quiz_victory").takeIf { it != 0 }?.let {
+                SmartAudioPlayer.playRawAudio(context, it)
+            }
+
             showReviewDialog()
         }
     } else {

@@ -8,6 +8,7 @@
     <string name="nav_grammar">Grammar</string>
     <string name="nav_profile">Profile</string>
     <string name="nav_leaderboard">Leaderboard</string>
+    <string name="leaderboard_roar_success">Challenge Roar sent successfully! 🦁</string>
 
     <!-- Quiz Screen -->
     <string name="quiz_question_count">Question %1$s</string>

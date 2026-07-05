@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -25,6 +24,8 @@ import com.relyvo.izem.model.Word
 import com.relyvo.izem.ui.modal.ContributionSheet
 import com.relyvo.izem.ui.theme.IzemBlue
 import com.relyvo.izem.ui.theme.IzemGold
+import com.relyvo.izem.ui.theme.IzemGreen
+import com.relyvo.izem.ui.theme.IzemGreenDark
 import com.relyvo.izem.ui.theme.IzemOrange
 import com.relyvo.izem.viewmodel.AppViewModel
 
@@ -73,6 +74,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                             Screen.Categories -> IzemBlue
                             Screen.Quiz -> IzemOrange
                             Screen.Profile -> IzemGold
+                            Screen.Grammar -> if (androidx.compose.foundation.isSystemInDarkTheme()) IzemGreenDark else IzemGreen
                             else -> MaterialTheme.colorScheme.primary
                         }
 

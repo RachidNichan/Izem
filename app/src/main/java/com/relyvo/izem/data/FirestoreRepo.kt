@@ -317,4 +317,27 @@ class FirestoreRepo {
             }
     }
 
+    suspend fun sendInteraction(
+        senderId: String,
+        senderName: String,
+        targetId: String,
+        type: String = "roar"
+    ) {
+        val interactionData = hashMapOf(
+            "senderId" to senderId,
+            "senderName" to senderName,
+            "targetId" to targetId,
+            "type" to type,
+            "timestamp" to FieldValue.serverTimestamp()
+        )
+
+        try {
+            db.collection("interactions").add(interactionData).await()
+            println("🦁 Interaction registered successfully")
+        } catch (e: Exception) {
+            println("❌ Error sending interaction: ${e.message}")
+            throw e
+        }
+    }
+
 }

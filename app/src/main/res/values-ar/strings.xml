@@ -8,6 +8,7 @@
     <string name="nav_grammar">قواعد</string>
     <string name="nav_profile">حسابي</string>
     <string name="nav_leaderboard">لوحة الصدارة</string>
+    <string name="leaderboard_roar_success">تم إرسال زئير التحدي بنجاح! 🦁</string>
 
     <!-- Quiz Screen -->
     <string name="quiz_question_count">السؤال %1$s</string>

@@ -478,6 +478,26 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun sendRoarChallenge(targetUserId: String, onResult: (Boolean) -> Unit) {
+        val senderId = currentUserId ?: return
+        val senderName = _userProfile.value.displayName.ifEmpty { "Izem" }
+
+        viewModelScope.launch {
+            try {
+                repo.sendInteraction(
+                    senderId = senderId,
+                    senderName = senderName,
+                    targetId = targetUserId,
+                    type = "roar"
+                )
+                onResult(true)
+            } catch (e: Exception) {
+                android.util.Log.e("IzemInteraction", "Failed to send roar: ${e.message}")
+                onResult(false)
+            }
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         wordsListener?.remove()

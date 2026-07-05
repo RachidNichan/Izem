@@ -55,6 +55,8 @@ class MainActivity : ComponentActivity() {
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
 
+        (application as IzemApp).scheduleReminder()
+
         setContent {
             val viewModel: AppViewModel = hiltViewModel()
             val isArabic by viewModel.isArabic.collectAsState()
