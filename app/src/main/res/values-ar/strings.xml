@@ -1,0 +1,84 @@
+<resources>
+    <string name="app_name">إيزم</string>
+
+    <!-- Navigation -->
+    <string name="nav_learn">تَعلُّم</string>
+    <string name="nav_words">كلمات</string>
+    <string name="nav_quiz">اختبار</string>
+    <string name="nav_grammar">قواعد</string>
+    <string name="nav_profile">حسابي</string>
+    <string name="nav_leaderboard">لوحة الصدارة</string>
+
+    <!-- Quiz Screen -->
+    <string name="quiz_question_count">السؤال %1$s</string>
+    <string name="quiz_xp">نقطة: %1$s</string>
+    <string name="quiz_how_to_say">كيف نقول:</string>
+    <string name="quiz_next">التالي ⬅</string>
+    <string name="quiz_finish">إنهاء 🏁</string>
+    <string name="quiz_well_done">أحسنت! 🦁</string>
+    <string name="quiz_total_xp">مجموع النقاط</string>
+    <string name="quiz_share_result">شارك النتيجة</string>
+    <string name="quiz_play_again">إلعب مجدداً</string>
+    <string name="quiz_exit">خروج</string>
+    <string name="quiz_share_message">لقد حصلت على %1$s نقطة في تطبيق إيزم (Izem)! 🦁✨\n%2$s</string>
+
+    <!-- Auth & Profile -->
+    <string name="auth_welcome_back">مرحباً بك مجدداً! 🦁</string>
+    <string name="auth_progress_saved">تم حفظ تقدمك بنجاح! 🎉</string>
+    <string name="auth_account_linked">تم ربط الحساب بنجاح! 🎉</string>
+    <string name="profile_current_rank">رتبتك الحالية</string>
+    <string name="profile_total_xp">مجموع النقاط</string>
+    <string name="profile_words_found">كلمات مكتشفة</string>
+    <string name="profile_learning_days">أيام التعلم</string>
+    <string name="profile_active_days">%1$s يوم نشاط</string>
+    <string name="profile_you">أنت</string>
+    <string name="profile_xp_suffix">%1$s نقطة</string>
+    <string name="level_azemwaru">إيزم أمزوارو</string>
+    <string name="level_anlmad">إيزم أنلماذ</string>
+    <string name="level_amqran">إيزم أمقران</string>
+    <string name="level_agellid">أجيليد ن إيزماون</string>
+    <string name="level_izem">إيزم</string>
+    <string name="profile_motivation">استمر في التعلم لتصبح ملك الأسود!</string>
+    <string name="profile_logout">تسجيل الخروج</string>
+    <string name="profile_welcome">مرحباً بك</string>
+    <string name="profile_save_progress">احفظ تقدمك</string>
+    <string name="profile_link_account_desc">اربط حسابك لضمان عدم ضياع نقاطك ومستواك.</string>
+    <string name="profile_google_signin">متابعة باستخدام Google</string>
+    <string name="profile_email_signin">تسجيل الدخول بالإيميل</string>
+    <string name="profile_email_signup">حفظ التقدم بالإيميل</string>
+    <string name="profile_new_here">ليس لديك حساب؟</string>
+    <string name="profile_already_account">لديك حساب؟ سجل دخولك</string>
+    <string name="profile_signin_title">تسجيل الدخول</string>
+    <string name="profile_signup_title">حفظ التقدم عبر البريد</string>
+
+    <!-- Common -->
+    <string name="common_email">البريد الإلكتروني</string>
+    <string name="common_password">كلمة السر (6 أحرف +)</string>
+    <string name="common_confirm">تأكيد</string>
+    <string name="common_save_account">حفظ الحساب</string>
+    <string name="common_cancel">إلغاء</string>
+    <string name="common_or">أو</string>
+
+    <!-- Grammar -->
+    <string name="grammar_verbs">الأفعال</string>
+    <string name="grammar_phrases">العبارات</string>
+    <string name="grammar_loading_verbs">جاري تحميل الأفعال...</string>
+    <string name="grammar_loading_phrases">جاري تحميل العبارات...</string>
+    <string name="grammar_past">الماضي</string>
+    <string name="grammar_present">المضارع</string>
+    <string name="grammar_future">المستقبل</string>
+    <string name="grammar_no_conjugation">لم يتم إضافة التصريف بعد</string>
+
+    <!-- Contribution -->
+    <string name="contribution_correct_word">تصحيح الكلمة ✏️</string>
+    <string name="contribution_add_word">إضافة كلمة جديدة 🦁</string>
+    <string name="contribution_tifinagh">كتابة تيفيناغ</string>
+    <string name="contribution_tamazight">تمازيغت (باللاتينية)</string>
+    <string name="contribution_arabic_trans">الترجمة العربية</string>
+    <string name="contribution_english_trans">الترجمة الإنجليزية</string>
+    <string name="contribution_photo">صورة</string>
+    <string name="contribution_voice">صوت</string>
+    <string name="contribution_audio_required">⚠️ يرجى إضافة تسجيل صوتي للكلمة</string>
+    <string name="contribution_success">شكراً لمساهمتك! سيتم مراجعة اقتراحك. 🦁</string>
+    <string name="contribution_submit">إرسال للمراجعة</string>
+</resources>

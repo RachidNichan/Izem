@@ -1,23 +1,23 @@
 package com.relyvo.izem.data
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import com.relyvo.izem.model.Category
 import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Word
+import com.relyvo.izem.model.Phrase
+import com.relyvo.izem.model.Verb
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.google.firebase.storage.FirebaseStorage
-import com.relyvo.izem.model.Phrase
-import com.relyvo.izem.model.Verb
-import kotlinx.coroutines.tasks.await
 
 class FirestoreRepo {
 
@@ -43,7 +43,7 @@ class FirestoreRepo {
     ): ListenerRegistration {
         return db.collection("words")
             .whereEqualTo("categoryId", categoryId)
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.ASCENDING)
+            .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
@@ -83,7 +83,7 @@ class FirestoreRepo {
         val quizData = hashMapOf(
             "score" to score,
             "totalQuestions" to totalQuestions,
-            "timestamp" to com.google.firebase.Timestamp.now(),
+            "timestamp" to Timestamp.now(),
             "completed" to true
         )
         db.collection("users").document(userId)
@@ -104,9 +104,9 @@ class FirestoreRepo {
 
             val data = hashMapOf(
                 "totalXP" to newTotalXP,
-                "lastActive" to com.google.firebase.Timestamp.now()
+                "lastActive" to Timestamp.now()
             )
-            transaction.set(userRef, data, com.google.firebase.firestore.SetOptions.merge())
+            transaction.set(userRef, data, SetOptions.merge())
 
             newTotalXP
         }.addOnSuccessListener { newTotalXP ->
@@ -121,7 +121,7 @@ class FirestoreRepo {
             .update("currentLevel", levelName)
             .addOnFailureListener {
                 db.collection("users").document(userId)
-                    .set(mapOf("currentLevel" to levelName), com.google.firebase.firestore.SetOptions.merge())
+                    .set(mapOf("currentLevel" to levelName), SetOptions.merge())
             }
     }
 
@@ -133,30 +133,17 @@ class FirestoreRepo {
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    try {
-                        val xp = snapshot.getLong("totalXP")?.toInt() ?: 0
-                        val level = snapshot.getString("currentLevel") ?: "Izem Amezwaru"
-                        val learned = snapshot.get("learnedWords") as? List<String> ?: emptyList()
-                        val days = snapshot.getLong("learningDays")?.toInt() ?: 0
-
-                        onResult(UserProfile(
-                            totalXP = xp,
-                            currentLevel = level,
-                            learnedWords = learned,
-                            learningDays = days
-                        ))
-                    } catch (e: Exception) {
-                        onResult(UserProfile())
-                    }
+                    val profile = snapshot.toObject<UserProfile>()?.copy(userId = snapshot.id)
+                    onResult(profile ?: UserProfile(userId = userId))
                 } else {
-                    onResult(UserProfile())
+                    onResult(UserProfile(userId = userId))
                 }
             }
     }
 
     fun updateActiveDays(userId: String) {
         val userRef = db.collection("users").document(userId)
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).format(Date())
 
         db.runTransaction { transaction ->
             val snapshot = transaction.get(userRef)
@@ -177,13 +164,13 @@ class FirestoreRepo {
         userRef.update("learnedWords", FieldValue.arrayUnion(wordId))
             .addOnFailureListener {
                 val data = hashMapOf("learnedWords" to listOf(wordId))
-                userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+                userRef.set(data, SetOptions.merge())
             }
     }
 
     fun submitFullSuggestion(suggestion: Suggestion) {
         db.collection("suggestions")
-            .add(suggestion.copy(createdAt = com.google.firebase.Timestamp.now()))
+            .add(suggestion.copy(createdAt = Timestamp.now()))
             .addOnSuccessListener {
                 println("✅ Suggestion submitted successfully")
             }
@@ -209,20 +196,47 @@ class FirestoreRepo {
         }
     }
 
+    fun updateUserLanguage(userId: String, isArabic: Boolean) {
+        val lang = if (isArabic) "ar" else "en"
+        db.collection("users").document(userId)
+            .set(mapOf("language" to lang), SetOptions.merge())
+    }
+
     fun updateFcmToken(userId: String, token: String) {
         val userRef = db.collection("users").document(userId)
         val data = hashMapOf("fcmToken" to token)
 
-        userRef.set(data, com.google.firebase.firestore.SetOptions.merge())
+        userRef.set(data, SetOptions.merge())
             .addOnSuccessListener {
                 // android.util.Log.d("IzemFCM", "🔥 Firestore Document Created/Updated for: $userId")
             }
     }
 
-    fun updateUserLanguage(userId: String, isArabic: Boolean) {
-        val lang = if (isArabic) "ar" else "en"
+    fun syncUserProfile(user: com.google.firebase.auth.FirebaseUser) {
+        val userRef = db.collection("users").document(user.uid)
+
+        userRef.get().addOnSuccessListener { snapshot ->
+            val data = if (snapshot.exists() && snapshot.contains("displayName")) {
+                hashMapOf(
+                    "lastActive" to Timestamp.now()
+                )
+            } else {
+                hashMapOf(
+                    "displayName" to (user.displayName ?: "Izem"),
+                    "lastActive" to Timestamp.now()
+                )
+            }
+
+            userRef.set(data, SetOptions.merge())
+        }
+    }
+
+    fun updateDisplayName(userId: String, newName: String, onComplete: (Boolean) -> Unit) {
         db.collection("users").document(userId)
-            .set(mapOf("language" to lang), com.google.firebase.firestore.SetOptions.merge())
+            .update("displayName", newName)
+            .addOnCompleteListener { task ->
+                onComplete(task.isSuccessful)
+            }
     }
 
     // 🔹 1. Listen to Phrases (Realtime)
@@ -272,6 +286,31 @@ class FirestoreRepo {
                     val list = snapshot.toObjects(Verb::class.java)
                     // Sort alphabetically by English infinitive (or any other field)
                     onResult(list.sortedBy { it.infinitiveEn })
+                } else {
+                    onResult(emptyList())
+                }
+            }
+    }
+
+    fun listenLeaderboard(
+        limit: Long = 20L,
+        onResult: (List<UserProfile>) -> Unit
+    ): ListenerRegistration {
+        return db.collection("users")
+            .orderBy("totalXP", Query.Direction.DESCENDING)
+            .limit(limit)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    println("❌ Error listening to leaderboard: ${error.message}")
+                    onResult(emptyList())
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+                    val list = snapshot.documents.mapNotNull { doc ->
+                        doc.toObject<UserProfile>()?.copy(userId = doc.id)
+                    }
+                    onResult(list)
                 } else {
                     onResult(emptyList())
                 }

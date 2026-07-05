@@ -1,3 +1,84 @@
 <resources>
     <string name="app_name">Izem</string>
+
+    <!-- Navigation -->
+    <string name="nav_learn">Learn</string>
+    <string name="nav_words">Words</string>
+    <string name="nav_quiz">Quiz</string>
+    <string name="nav_grammar">Grammar</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_leaderboard">Leaderboard</string>
+
+    <!-- Quiz Screen -->
+    <string name="quiz_question_count">Question %1$s</string>
+    <string name="quiz_xp">XP: %1$s</string>
+    <string name="quiz_how_to_say">How do you say:</string>
+    <string name="quiz_next">Next Question ➡</string>
+    <string name="quiz_finish">Finish 🏁</string>
+    <string name="quiz_well_done">Well Done! 🦁</string>
+    <string name="quiz_total_xp">Total XP Gained</string>
+    <string name="quiz_share_result">Share Result</string>
+    <string name="quiz_play_again">Play Again</string>
+    <string name="quiz_exit">Exit</string>
+    <string name="quiz_share_message">I just scored %1$s XP in Izem App! 🦁\n%2$s</string>
+
+    <!-- Auth & Profile -->
+    <string name="auth_welcome_back">Welcome back! 🦁</string>
+    <string name="auth_progress_saved">Progress saved successfully! 🎉</string>
+    <string name="auth_account_linked">Account linked successfully! 🎉</string>
+    <string name="profile_current_rank">YOUR CURRENT RANK</string>
+    <string name="profile_total_xp">Total Experience</string>
+    <string name="profile_words_found">Words Found</string>
+    <string name="profile_learning_days">Learning Days</string>
+    <string name="profile_active_days">%1$s active days</string>
+    <string name="profile_you">You</string>
+    <string name="profile_xp_suffix">%1$s XP</string>
+    <string name="level_azemwaru">Izem Amezwaru</string>
+    <string name="level_anlmad">Izem Anlmad</string>
+    <string name="level_amqran">Izem Amqran</string>
+    <string name="level_agellid">Agellid n Izmawn</string>
+    <string name="level_izem">Izem</string>
+    <string name="profile_motivation">Keep learning to become the King of Lions!</string>
+    <string name="profile_logout">Log Out</string>
+    <string name="profile_welcome">Welcome Back</string>
+    <string name="profile_save_progress">Save Your Progress</string>
+    <string name="profile_link_account_desc">Link your account to keep your XP and Ranks forever.</string>
+    <string name="profile_google_signin">Continue with Google</string>
+    <string name="profile_email_signin">Sign in with Email</string>
+    <string name="profile_email_signup">Sign up with Email</string>
+    <string name="profile_new_here">New here? Save progress</string>
+    <string name="profile_already_account">Already have an account? Sign in</string>
+    <string name="profile_signin_title">Sign In</string>
+    <string name="profile_signup_title">Save progress via Email</string>
+
+    <!-- Common -->
+    <string name="common_email">Email</string>
+    <string name="common_password">Password (6+ chars)</string>
+    <string name="common_confirm">Confirm</string>
+    <string name="common_save_account">Save Account</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_or">OR</string>
+
+    <!-- Grammar -->
+    <string name="grammar_verbs">Verbs</string>
+    <string name="grammar_phrases">Phrases</string>
+    <string name="grammar_loading_verbs">Loading verbs...</string>
+    <string name="grammar_loading_phrases">Loading phrases...</string>
+    <string name="grammar_past">Past</string>
+    <string name="grammar_present">Present</string>
+    <string name="grammar_future">Future</string>
+    <string name="grammar_no_conjugation">Conjugation not added yet</string>
+
+    <!-- Contribution -->
+    <string name="contribution_correct_word">Correct Word ✏️</string>
+    <string name="contribution_add_word">Add New Word 🦁</string>
+    <string name="contribution_tifinagh">Tifinagh Script</string>
+    <string name="contribution_tamazight">Tamazight (Latin)</string>
+    <string name="contribution_arabic_trans">Arabic Translation</string>
+    <string name="contribution_english_trans">English Translation</string>
+    <string name="contribution_photo">Photo</string>
+    <string name="contribution_voice">Voice</string>
+    <string name="contribution_audio_required">⚠️ Please add an audio recording</string>
+    <string name="contribution_success">Thank you! Your suggestion is under review. 🦁</string>
+    <string name="contribution_submit">Submit for Review</string>
 </resources>

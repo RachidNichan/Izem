@@ -13,6 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -28,7 +30,7 @@ import com.relyvo.izem.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(viewModel: AppViewModel = viewModel()) {
+fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
@@ -59,9 +61,13 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                 ) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
+                    val currentRoute = currentDestination?.route
 
                     bottomNavItems.forEach { screen ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+
+                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
+                                (screen == Screen.Profile && currentRoute == Screen.Leaderboard.route) ||
+                                (screen == Screen.Categories && currentRoute?.startsWith("word_list") == true)
 
                         val activeColor = when (screen) {
                             Screen.Categories -> IzemBlue
@@ -82,7 +88,7 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                             },
                             label = {
                                 Text(
-                                    text = if (isArabic) screen.titleAr else screen.title,
+                                    text = stringResource(id = screen.titleRes),
                                     fontWeight = if (selected) FontWeight.Black else FontWeight.Medium,
                                     fontSize = 12.sp
                                 )
@@ -96,16 +102,21 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                                 unselectedTextColor = Color.Gray.copy(alpha = 0.6f)
                             ),
                             onClick = {
-                                val isLearnTab = screen == Screen.Categories
+                                if (currentRoute == Screen.Leaderboard.route && screen == Screen.Profile) {
+                                    navController.popBackStack(Screen.Profile.route, inclusive = false)
+                                } else if (currentRoute?.startsWith("word_list") == true && screen == Screen.Categories) {
+                                    navController.popBackStack(Screen.Categories.route, inclusive = false)
+                                } else {
+                                    val isLearnTab = screen == Screen.Categories
 
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = !isLearnTab
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = !isLearnTab
+                                        }
+
+                                        launchSingleTop = true
+                                        restoreState = !isLearnTab
                                     }
-
-                                    launchSingleTop = true
-
-                                    restoreState = !isLearnTab
                                 }
                             }
                         )
@@ -203,10 +214,22 @@ fun MainScreen(viewModel: AppViewModel = viewModel()) {
                         )
                     }
 
+                    composable(Screen.Leaderboard.route) {
+                        LeaderboardScreen(
+                            viewModel = viewModel,
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                     composable(Screen.Profile.route) {
                         ProfileScreen(
                             isArabic = isArabic,
-                            viewModel = viewModel
+                            viewModel = viewModel,
+                            onLeaderboardClick = {
+                                navController.navigate(Screen.Leaderboard.route)
+                            }
                         )
                     }
                 }

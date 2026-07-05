@@ -8,49 +8,54 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.relyvo.izem.viewmodel.AppViewModel
 import com.relyvo.izem.ui.theme.IzemGold
+import com.relyvo.izem.ui.modal.AuthBottomSheet
+import com.relyvo.izem.ui.modal.ProfileAuthCTA
 import com.relyvo.izem.R
-import com.relyvo.izem.ui.theme.IzemOrange
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     isArabic: Boolean,
-    viewModel: AppViewModel = viewModel()
+    viewModel: AppViewModel = hiltViewModel(),
+    onLeaderboardClick: () -> Unit
 ) {
-    val userProfile by viewModel.userProfile.collectAsState()
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val isAnonymous by viewModel.isUserAnonymous.collectAsState()
-    var showEmailDialog by remember { mutableStateOf(false) }
+    val isAnonymous by viewModel.isUserAnonymous.collectAsStateWithLifecycle()
+    var showAuthSheet by remember { mutableStateOf(false) }
     var isLoginMode by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
+
+    var showEditNameDialog by remember { mutableStateOf(false) }
+    var tempName by remember(userProfile.displayName) { mutableStateOf(userProfile.displayName) }
 
     val gso = remember {
         com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -71,12 +76,18 @@ fun ProfileScreen(
                 account.idToken?.let { token ->
                     if (isLoginMode) {
                         viewModel.signInWithGoogle(token,
-                            onSuccess = { Toast.makeText(context, if(isArabic) "مرحباً بك مجدداً! 🦁" else "Welcome back! 🦁", Toast.LENGTH_SHORT).show() },
+                            onSuccess = {
+                                showAuthSheet = false
+                                Toast.makeText(context, R.string.auth_welcome_back, Toast.LENGTH_SHORT).show()
+                            },
                             onError = { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
                         )
                     } else {
                         viewModel.linkWithGoogle(token,
-                            onSuccess = { Toast.makeText(context, if(isArabic) "تم حفظ تقدمك بنجاح! 🎉" else "Progress saved successfully! 🎉", Toast.LENGTH_SHORT).show() },
+                            onSuccess = {
+                                showAuthSheet = false
+                                Toast.makeText(context, R.string.auth_progress_saved, Toast.LENGTH_SHORT).show()
+                            },
                             onError = { Toast.makeText(context, it, Toast.LENGTH_LONG).show() }
                         )
                     }
@@ -87,19 +98,22 @@ fun ProfileScreen(
         }
     }
 
-    if (showEmailDialog) {
-        EmailLinkDialog(
+    if (showAuthSheet) {
+        AuthBottomSheet(
             isArabic = isArabic,
-            isLoginMode = isLoginMode,
-            onDismiss = { showEmailDialog = false },
-            onConfirm = { email, pass ->
-                if (isLoginMode) {
+            onDismiss = { showAuthSheet = false },
+            onGoogleClick = { loginMode ->
+                isLoginMode = loginMode
+                authLauncher.launch(googleSignInClient.signInIntent)
+            },
+            onEmailSubmit = { email, pass, loginMode ->
+                if (loginMode) {
                     viewModel.signInWithEmail(
                         email = email,
                         pass = pass,
                         onSuccess = {
-                            showEmailDialog = false
-                            Toast.makeText(context, if(isArabic) "مرحباً بك مجدداً! 🦁" else "Welcome back! 🦁", Toast.LENGTH_SHORT).show()
+                            showAuthSheet = false
+                            Toast.makeText(context, R.string.auth_welcome_back, Toast.LENGTH_SHORT).show()
                         },
                         onError = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
                     )
@@ -108,8 +122,8 @@ fun ProfileScreen(
                         email = email,
                         pass = pass,
                         onSuccess = {
-                            showEmailDialog = false
-                            Toast.makeText(context, if(isArabic) "تم ربط الحساب بنجاح! 🎉" else "Account linked successfully! 🎉", Toast.LENGTH_SHORT).show()
+                            showAuthSheet = false
+                            Toast.makeText(context, R.string.auth_account_linked, Toast.LENGTH_SHORT).show()
                         },
                         onError = { err -> Toast.makeText(context, err, Toast.LENGTH_LONG).show() }
                     )
@@ -129,18 +143,54 @@ fun ProfileScreen(
     ) {
 
         AnimatedVisibility(visible = isAnonymous) {
-            AccountUpgradeCard(
-                isArabic = isArabic,
-                isLoginMode = isLoginMode,
-                onGoogleClick = { authLauncher.launch(googleSignInClient.signInIntent) },
-                onEmailClick = { showEmailDialog = true },
-                onLoginInstead = { isLoginMode = !isLoginMode }
+            ProfileAuthCTA(onOpenAuth = { showAuthSheet = true })
+        }
+
+        if (showEditNameDialog) {
+            AlertDialog(
+                onDismissRequest = { showEditNameDialog = false },
+                title = { Text(text = if (isArabic) "تعديل الاسم" else "Edit Name") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = tempName,
+                            onValueChange = { if (it.length <= 15) tempName = it },
+                            label = { Text(text = if (isArabic) "الاسم المستعار" else "Nickname") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (tempName.isNotBlank()) {
+                                viewModel.updateDisplayName(tempName.trim()) { success ->
+                                    if (success) {
+                                        showEditNameDialog = false
+                                        Toast.makeText(context, if (isArabic) "تم تحديث الاسم بنجاح" else "Name updated successfully", Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        Toast.makeText(context, "Error updating name", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = IzemGold)
+                    ) {
+                        Text(text = if (isArabic) "حفظ" else "Save")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showEditNameDialog = false }) {
+                        Text(text = if (isArabic) "إلغاء" else "Cancel", color = Color.Gray)
+                    }
+                }
             )
         }
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // --- 🦁 Avatar ---
+        // --- ? Avatar ---
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -158,13 +208,33 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = userProfile.currentLevel ?: "Izem Amezwaru",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.onSurface,
-            letterSpacing = (-1).sp
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = userProfile.displayName.ifEmpty { "Izem" },
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+                letterSpacing = (-1).sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = { showEditNameDialog = true },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Name",
+                    tint = IzemGold,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
 
         Surface(
             color = IzemGold.copy(alpha = 0.1f),
@@ -173,7 +243,7 @@ fun ProfileScreen(
             border = BorderStroke(1.dp, IzemGold.copy(alpha = 0.2f))
         ) {
             Text(
-                text = if(isArabic) "رتبتك الحالية" else "YOUR CURRENT RANK",
+                text = getLocalizedLevel(userProfile.currentLevel),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
@@ -195,23 +265,58 @@ fun ProfileScreen(
             Column(modifier = Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Column {
-                        Text(text = if(isArabic) "مجموع النقاط" else "Total Experience", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
+                        Text(text = stringResource(R.string.profile_total_xp), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                         Text(text = "${userProfile.totalXP} XP", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black, color = IzemGold)
                     }
                     Icon(imageVector = Icons.Default.Star, contentDescription = null, modifier = Modifier.size(52.dp), tint = IzemGold)
                 }
                 HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    StatMiniBox(label = if(isArabic) "كلمات مكتشفة" else "Words Found", value = userProfile.learnedWords.size.toString(), color = MaterialTheme.colorScheme.primary)
-                    StatMiniBox(label = if(isArabic) "أيام التعلم" else "Learning Days", value = userProfile.learningDays.toString(), color = Color(0xFF4CAF50))
+                    StatMiniBox(label = stringResource(R.string.profile_words_found), value = userProfile.learnedWords.size.toString(), color = MaterialTheme.colorScheme.primary)
+                    StatMiniBox(label = stringResource(R.string.profile_learning_days), value = userProfile.learningDays.toString(), color = Color(0xFF4CAF50))
                 }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onLeaderboardClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = IzemGold.copy(alpha = 0.4f)),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = IzemGold,
+                contentColor = Color.White
+            ),
+            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = if (isArabic) "عرض لوحة المتصدرين" else "View Leaderboard",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = if(isArabic) "استمر في التعلم لتصبح ملك الأسود!" else "Keep learning to become the King of Lions!",
+            text = stringResource(R.string.profile_motivation),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -224,7 +329,7 @@ fun ProfileScreen(
         if (!isAnonymous) {
             Spacer(modifier = Modifier.height(24.dp))
             TextButton(onClick = { viewModel.logout { } }) {
-                Text(if(isArabic) "تسجيل الخروج" else "Log Out", color = Color.Red, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.profile_logout), color = Color.Red, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -241,137 +346,13 @@ fun StatMiniBox(label: String, value: String, color: Color) {
 }
 
 @Composable
-fun AccountUpgradeCard(
-    isArabic: Boolean,
-    isLoginMode: Boolean,
-    onGoogleClick: () -> Unit,
-    onEmailClick: () -> Unit,
-    onLoginInstead: () -> Unit // 🔹 New parameter
-) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, IzemGold.copy(alpha = 0.2f)),
-        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-    ) {
-        Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.AccountCircle, null, tint = IzemGold, modifier = Modifier.size(40.dp))
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = if(isLoginMode) (if(isArabic) "مرحباً بك" else "Welcome Back") else (if(isArabic) "احفظ تقدمك" else "Save Your Progress"),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black
-            )
-
-            Text(
-                text = if(isArabic) "اربط حسابك لضمان عدم ضياع نقاطك ومستواك." else "Link your account to keep your XP and Ranks forever.",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f),
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = onGoogleClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF757575)
-                ),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_google_logo),
-                        contentDescription = "Google Logo",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Unspecified
-                    )
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Text(
-                        text = if (isArabic) "متابعة باستخدام Google" else "Continue with Google",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedButton(
-                onClick = onEmailClick,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-            ) {
-                Text(
-                    text = if (isLoginMode) {
-                        if (isArabic) "تسجيل الدخول بالإيميل" else "Sign in with Email"
-                    } else {
-                        if (isArabic) "حفظ التقدم بالإيميل" else "Sign up with Email"
-                    },
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            TextButton(onClick = onLoginInstead) {
-                Text(
-                    text = if(isLoginMode) (if(isArabic) "ليس لديك حساب؟" else "New here? Save progress") else (if(isArabic) "لديك حساب؟ سجل دخولك" else "Already have an account? Sign in"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-        }
+private fun getLocalizedLevel(level: String): String {
+    return when (level) {
+        "Izem Amezwaru" -> stringResource(R.string.level_azemwaru)
+        "Izem Anlmad" -> stringResource(R.string.level_anlmad)
+        "Izem Amqran" -> stringResource(R.string.level_amqran)
+        "Agellid n Izmawn" -> stringResource(R.string.level_agellid)
+        "Izem" -> stringResource(R.string.level_izem)
+        else -> level
     }
-}
-
-@Composable
-fun EmailLinkDialog(isArabic: Boolean, isLoginMode: Boolean, onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if(isLoginMode) (if(isArabic) "تسجيل الدخول" else "Sign In") else (if(isArabic) "حفظ التقدم عبر البريد" else "Save progress via Email"), fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text(if(isArabic) "البريد الإلكتروني" else "Email") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(if(isArabic) "كلمة السر (6 أحرف +)" else "Password (6+ chars)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onConfirm(email, password) }) {
-                Text(if(isLoginMode) (if(isArabic) "تأكيد" else "Confirm") else (if(isArabic) "حفظ الحساب" else "Save Account"))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(if(isArabic) "إلغاء" else "Cancel") }
-        }
-    )
 }

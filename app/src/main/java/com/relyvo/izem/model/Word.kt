@@ -8,6 +8,5 @@ data class Word(
     val tamazight: String = "",
     val tifinagh: String = "",
     val imageUrl: String = "",
-    val audioUrl: String = "",
-    val dialect: String = "Standard"
+    val audioUrl: String = ""
 )

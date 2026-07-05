@@ -18,12 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.relyvo.izem.R
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.relyvo.izem.model.Phrase
 import com.relyvo.izem.model.Verb
 import com.relyvo.izem.utils.SmartAudioPlayer
@@ -40,16 +43,16 @@ import com.relyvo.izem.ui.theme.OnGrammarContainerDark
 @Composable
 fun GrammarScreen(
     isArabic: Boolean,
-    viewModel: AppViewModel = viewModel()
+    viewModel: AppViewModel = hiltViewModel()
 ) {
     val isDark = isSystemInDarkTheme()
     val dynamicIzemGreen = if (isDark) IzemGreenDark else IzemGreen
 
-    val verbs by viewModel.verbs.collectAsState()
-    val phrases by viewModel.phrases.collectAsState()
+    val verbs by viewModel.verbs.collectAsStateWithLifecycle()
+    val phrases by viewModel.phrases.collectAsStateWithLifecycle()
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = if (isArabic) listOf("الأفعال", "العبارات") else listOf("Verbs", "Phrases")
+    val tabs = listOf(stringResource(R.string.grammar_verbs), stringResource(R.string.grammar_phrases))
 
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(
@@ -84,7 +87,7 @@ fun GrammarScreen(
 fun VerbsList(verbs: List<Verb>, isArabic: Boolean) {
     if (verbs.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(if (isArabic) "جاري تحميل الأفعال..." else "Loading verbs...", color = Color.Gray)
+            Text(stringResource(R.string.grammar_loading_verbs), color = Color.Gray)
         }
     } else {
         LazyColumn(
@@ -154,19 +157,19 @@ fun VerbCard(verb: Verb, isArabic: Boolean) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TenseButton(
-                    text = if (isArabic) "الماضي" else "Past",
+                    text = stringResource(R.string.grammar_past),
                     isSelected = selectedTense == "past",
                     modifier = Modifier.weight(1f)
                 ) { selectedTense = "past" }
 
                 TenseButton(
-                    text = if (isArabic) "المضارع" else "Present",
+                    text = stringResource(R.string.grammar_present),
                     isSelected = selectedTense == "present",
                     modifier = Modifier.weight(1f)
                 ) { selectedTense = "present" }
 
                 TenseButton(
-                    text = if (isArabic) "المستقبل" else "Future",
+                    text = stringResource(R.string.grammar_future),
                     isSelected = selectedTense == "future",
                     modifier = Modifier.weight(1f)
                 ) { selectedTense = "future" }
@@ -182,7 +185,7 @@ fun VerbCard(verb: Verb, isArabic: Boolean) {
 
             if (currentMapToDisplay.isEmpty()) {
                 Text(
-                    text = if (isArabic) "لم يتم إضافة التصريف بعد" else "Conjugation not added yet",
+                    text = stringResource(R.string.grammar_no_conjugation),
                     color = Color.Gray,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
@@ -230,7 +233,7 @@ fun TenseButton(text: String, isSelected: Boolean, modifier: Modifier = Modifier
 fun PhrasesList(phrases: List<Phrase>, isArabic: Boolean) {
     if (phrases.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(if (isArabic) "جاري تحميل العبارات..." else "Loading phrases...", color = Color.Gray)
+            Text(stringResource(R.string.grammar_loading_phrases), color = Color.Gray)
         }
     } else {
         LazyColumn(

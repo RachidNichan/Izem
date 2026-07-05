@@ -22,4 +22,15 @@ object Utils {
             context.packageName
         )
     }
+
+    fun findActivity(context: Context): android.app.Activity? {
+        var currentContext = context
+        while (currentContext is android.content.ContextWrapper) {
+            if (currentContext is android.app.Activity) {
+                return currentContext
+            }
+            currentContext = currentContext.baseContext
+        }
+        return null
+    }
 }

@@ -76,6 +76,22 @@ object SmartAudioPlayer {
         }
     }
 
+    fun playRawAudio(context: Context, rawId: Int) {
+        try {
+            stopAudio()
+            mediaPlayer = MediaPlayer.create(context, rawId).apply {
+                start()
+                setOnCompletionListener {
+                    it.reset()
+                    it.release()
+                    if (mediaPlayer == it) mediaPlayer = null
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("IzemAudio", "Error playing raw: ${e.message}")
+        }
+    }
+
     fun stopAudio() {
         try {
             mediaPlayer?.let {

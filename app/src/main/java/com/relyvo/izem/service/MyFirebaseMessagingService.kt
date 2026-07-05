@@ -3,32 +3,17 @@ package com.relyvo.izem.service
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
-import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.relyvo.izem.MainActivity
 import com.relyvo.izem.R
-import com.relyvo.izem.data.FirestoreRepo // 🔹 استيراد الـ Repo
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
-
-    private val repo = FirestoreRepo()
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         remoteMessage.notification?.let {
             showNotification(it.title ?: "Izem", it.body ?: "Time to learn!")
-        }
-    }
-
-    override fun onNewToken(token: String) {
-        super.onNewToken(token)
-        // Log.d("IzemFCM", "New Token Generated: $token")
-
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        if (userId != null) {
-            repo.updateFcmToken(userId, token)
         }
     }
 

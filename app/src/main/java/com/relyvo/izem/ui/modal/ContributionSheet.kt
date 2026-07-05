@@ -17,8 +17,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.relyvo.izem.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relyvo.izem.model.Suggestion
@@ -58,8 +60,8 @@ fun ContributionSheet(
     ) {
         Text(
             text = if (existingWord != null)
-                (if(isArabic) "تصحيح الكلمة ✏️" else "Correct Word ✏️")
-            else (if(isArabic) "إضافة كلمة جديدة 🦁" else "Add New Word 🦁"),
+                stringResource(R.string.contribution_correct_word)
+            else stringResource(R.string.contribution_add_word),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Black
         )
@@ -70,7 +72,7 @@ fun ContributionSheet(
             value = tif,
             onValueChange = { tif = it },
             label = {
-                Text(if (isArabic) "كتابة تيفيناغ" else "Tifinagh Script")
+                Text(stringResource(R.string.contribution_tifinagh))
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -83,7 +85,7 @@ fun ContributionSheet(
             value = tmz,
             onValueChange = { tmz = it },
             label = {
-                Text(if (isArabic) "تمازيغت (باللاتينية)" else "Tamazight (Latin)")
+                Text(stringResource(R.string.contribution_tamazight))
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
@@ -94,7 +96,7 @@ fun ContributionSheet(
         OutlinedTextField(
             value = ar,
             onValueChange = { ar = it },
-            label = { Text(if(isArabic) "الترجمة العربية" else "Arabic Translation") },
+            label = { Text(stringResource(R.string.contribution_arabic_trans)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
@@ -102,7 +104,7 @@ fun ContributionSheet(
         OutlinedTextField(
             value = en,
             onValueChange = { en = it },
-            label = { Text(if(isArabic) "الترجمة الإنجليزية" else "English Translation") },
+            label = { Text(stringResource(R.string.contribution_english_trans)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
@@ -121,7 +123,7 @@ fun ContributionSheet(
                     containerColor = if(imageUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                val imageLabel = if (isArabic) "صورة" else "Photo"
+                val imageLabel = stringResource(R.string.contribution_photo)
                 Text(
                     text = if(imageUri != null) "✅ $imageLabel" else "📷 $imageLabel",
                     fontSize = 14.sp
@@ -136,7 +138,7 @@ fun ContributionSheet(
                     containerColor = if(audioUri != null) Color(0xFF4CAF50) else MaterialTheme.colorScheme.secondary
                 )
             ) {
-                val audioLabel = if (isArabic) "صوت" else "Voice"
+                val audioLabel = stringResource(R.string.contribution_voice)
                 Text(
                     text = if(audioUri != null) "✅ $audioLabel" else "🎤 $audioLabel",
                     fontSize = 14.sp
@@ -151,7 +153,7 @@ fun ContributionSheet(
 
         if (!isAudioValid) {
             Text(
-                text = if (isArabic) "⚠️ يرجى إضافة تسجيل صوتي للكلمة" else "⚠️ Please add an audio recording",
+                text = stringResource(R.string.contribution_audio_required),
                 color = Color.Red,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium
@@ -180,7 +182,7 @@ fun ContributionSheet(
                     audioUri = audioUri,
                     onSuccess = {
                         isUploading = false
-                        Toast.makeText(context, if(isArabic) "شكراً لمساهمتك! سيتم مراجعة اقتراحك. 🦁" else "Thank you! Your suggestion is under review. 🦁", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.contribution_success), Toast.LENGTH_LONG).show()
                         onDismiss()
                     },
                     onError = { error ->
@@ -196,7 +198,7 @@ fun ContributionSheet(
             if (isUploading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text(if(isArabic) "إرسال للمراجعة" else "Submit for Review", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.contribution_submit), fontWeight = FontWeight.Bold)
             }
         }
 

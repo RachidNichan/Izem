@@ -1,9 +1,7 @@
 package com.relyvo.izem.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ListenerRegistration
 import com.relyvo.izem.data.AuthRepo
@@ -15,16 +13,25 @@ import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Verb
 import com.relyvo.izem.model.Word
+// استيراد نماذج الاختبار من مجلد الـ model
+import com.relyvo.izem.model.QuizQuestion
+import com.relyvo.izem.model.QuizUiState
+import com.relyvo.izem.model.IndexedLetter
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AppViewModel(application: Application) : AndroidViewModel(application) {
+@HiltViewModel
+class AppViewModel @Inject constructor(
+    private val repo: FirestoreRepo,
+    private val authRepo: AuthRepo,
+    private val settingsRepo: SettingsRepo
+) : ViewModel() {
 
-    private val repo = FirestoreRepo()
-    private val authRepo = AuthRepo()
     private val auth = FirebaseAuth.getInstance()
-    private val settingsRepo = SettingsRepo(application)
 
     // --- UI States ---
     private val _categories = MutableStateFlow<List<Category>>(emptyList())
@@ -45,22 +52,33 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _isUserAnonymous = MutableStateFlow(true)
     val isUserAnonymous = _isUserAnonymous.asStateFlow()
 
+    private val _quizUiState = MutableStateFlow(QuizUiState())
+    val quizUiState = _quizUiState.asStateFlow()
+
     // --- Listeners ---
     private var wordsListener: ListenerRegistration? = null
     private var allWordsListener: ListenerRegistration? = null
     private var profileListener: ListenerRegistration? = null
+    private var authListener: FirebaseAuth.AuthStateListener? = null
 
-    // 🔹 Grammar State: Phrases
+    // Grammar State: Phrases
     private val _phrases = MutableStateFlow<List<Phrase>>(emptyList())
     val phrases = _phrases.asStateFlow()
 
-    // 🔹 Grammar State: Verbs
+    // Grammar State: Verbs
     private val _verbs = MutableStateFlow<List<Verb>>(emptyList())
     val verbs = _verbs.asStateFlow()
 
     // Listeners to prevent memory leaks
     private var phrasesListener: ListenerRegistration? = null
     private var verbsListener: ListenerRegistration? = null
+
+    private val _leaderboardUsers = MutableStateFlow<List<UserProfile>>(emptyList())
+    val leaderboardUsers: StateFlow<List<UserProfile>> = _leaderboardUsers.asStateFlow()
+
+    private var leaderboardListener: ListenerRegistration? = null
+
+    private var authStateListener: FirebaseAuth.AuthStateListener? = null
 
     init {
         observeUserStatus()
@@ -78,27 +96,58 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         listenToVerbs()
         listenToPhrases()
+        listenToLeaderboard()
+        setupAuthObserver()
     }
 
+    private fun setupAuthObserver() {
+        authStateListener = FirebaseAuth.AuthStateListener { auth ->
+            listenToLeaderboard()
+        }
+        FirebaseAuth.getInstance().addAuthStateListener(authStateListener!!)
+    }
+
+    private fun listenToLeaderboard() {
+        leaderboardListener?.remove()
+
+        leaderboardListener = repo.listenLeaderboard(limit = 20) { users ->
+            _leaderboardUsers.value = users
+        }
+    }
+
+    val currentUserId: String?
+        get() = FirebaseAuth.getInstance().currentUser?.uid
+
     private fun observeUserStatus() {
-        auth.addAuthStateListener { firebaseAuth ->
+        authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
 
             if (user != null) {
                 _isUserAnonymous.value = user.isAnonymous
                 startProfileListener(user.uid)
 
+                // Sync profile for leaderboard
+                repo.syncUserProfile(user)
+
                 saveFcmToken()
             } else {
                 signInAnonymously()
             }
         }
+        authListener?.let { auth.addAuthStateListener(it) }
     }
 
     private fun startProfileListener(uid: String) {
         profileListener?.remove()
         profileListener = repo.listenToUserProfile(uid) { profile ->
             _userProfile.value = profile
+        }
+    }
+
+    fun updateDisplayName(newName: String, onComplete: (Boolean) -> Unit) {
+        val uid = currentUserId ?: return
+        repo.updateDisplayName(uid, newName) { success ->
+            onComplete(success)
         }
     }
 
@@ -109,6 +158,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun linkWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (idToken.isBlank()) {
+            onError("ID Token is empty.")
+            return
+        }
         val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
             if (authRepo.linkAccount(credential)) {
@@ -138,6 +191,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun signInWithGoogle(idToken: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (idToken.isBlank()) {
+            onError("ID Token is empty.")
+            return
+        }
         val credential = com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
         viewModelScope.launch {
             if (authRepo.signInWithCredential(credential)) {
@@ -147,6 +204,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun signInWithEmail(email: String, pass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        if (email.isBlank() || pass.isBlank()) {
+            onError("Email or password cannot be empty.")
+            return
+        }
         val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, pass)
         viewModelScope.launch {
             if (authRepo.signInWithCredential(credential)) {
@@ -175,32 +236,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         repo.updateActiveDays(uid)
     }
 
-    fun finishQuizSession(scoreInSession: Int) {
-        val uid = authRepo.currentUserId ?: return
-        repo.saveQuizResult(uid, scoreInSession, 10)
-        repo.updateUserProgress(uid, scoreInSession) { newTotalXP ->
-            val newLevel = getLevelName(newTotalXP)
-            repo.updateUserLevel(uid, newLevel)
-
-            // android.util.Log.d("IzemQuiz", "Updated! XP: $newTotalXP | Level: $newLevel")
-        }
-    }
-
-    private fun getLevelName(xp: Int): String {
-        return when {
-            xp < 100 -> "Izem Amezwaru"
-            xp < 500 -> "Izem Anlmad"
-            xp < 1000 -> "Izem Amqran"
-            else -> "Agellid n Izmawn"
-        }
-    }
-
     fun listenWordsByCategory(categoryId: String) {
         wordsListener?.remove()
         wordsListener = repo.listenWordsByCategory(categoryId) { _currentWords.value = it }
     }
 
-    // 🔹 Fetch Phrases
+    // Fetch Phrases
     fun listenToPhrases(categoryId: String? = null) {
         phrasesListener?.remove() // Stop old listener
         phrasesListener = repo.listenPhrases(categoryId) { list ->
@@ -208,7 +249,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // 🔹 Fetch Verbs
+    // Fetch Verbs
     fun listenToVerbs() {
         verbsListener?.remove() // Stop old listener
         verbsListener = repo.listenVerbs { list ->
@@ -274,12 +315,167 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     if (uid != null && token != null) {
                         repo.updateFcmToken(uid, token)
                         repo.updateUserLanguage(uid, _isArabic.value)
-                        // android.util.Log.d("IzemFCM", "✅ TOKEN SYNCED WITH UID: $uid")
-                    } else {
-                        // android.util.Log.e("IzemFCM", "⚠️ Auth not ready yet or token null")
                     }
                 }
             }
+    }
+
+    fun startNewQuiz() {
+        val words = _allWords.value
+        if (words.size >= 4) {
+            _quizUiState.value = QuizUiState(
+                questions = generateDynamicQuiz(words),
+                isLoading = false
+            )
+        }
+    }
+
+    fun selectOption(option: String) {
+        if (!_quizUiState.value.isAnswerChecked) {
+            _quizUiState.value = _quizUiState.value.copy(selectedAnswer = option)
+        }
+    }
+
+    fun addLetterToSpelling(id: Int, char: String) {
+        val state = _quizUiState.value
+        if (!state.isAnswerChecked) {
+            val updatedList = state.spellingGuessedLetters + IndexedLetter(id, char)
+            val currentWordGuessed = updatedList.joinToString("") { it.char }
+            _quizUiState.value = state.copy(
+                spellingGuessedLetters = updatedList,
+                selectedAnswer = currentWordGuessed
+            )
+        }
+    }
+
+    fun removeLetterFromSpelling(indexedLetter: IndexedLetter) {
+        val state = _quizUiState.value
+        if (!state.isAnswerChecked) {
+            val updatedList = state.spellingGuessedLetters.filter { it.id != indexedLetter.id }
+            val currentWordGuessed = updatedList.joinToString("") { it.char }
+            _quizUiState.value = state.copy(
+                spellingGuessedLetters = updatedList,
+                selectedAnswer = currentWordGuessed
+            )
+        }
+    }
+
+    fun checkAnswer() {
+        val state = _quizUiState.value
+        if (state.questions.isEmpty() || state.isAnswerChecked) return
+
+        val currentQuestion = state.questions[state.currentIndex]
+        val correctAnswer = when (currentQuestion) {
+            is QuizQuestion.TextQuestion -> currentQuestion.correctAnswer
+            is QuizQuestion.ImageQuestion -> currentQuestion.correctAnswer
+            is QuizQuestion.SpellingQuestion -> currentQuestion.correctAnswer
+        }
+
+        val isCorrect = state.selectedAnswer.trim().uppercase() == correctAnswer.trim().uppercase()
+        val newScore = if (isCorrect) state.score + 1 else state.score
+
+        _quizUiState.value = state.copy(
+            isAnswerChecked = true,
+            isCorrect = isCorrect,
+            score = newScore
+        )
+    }
+
+    fun moveToNextQuestion() {
+        val state = _quizUiState.value
+        val nextIndex = state.currentIndex + 1
+
+        if (nextIndex < state.questions.size) {
+            _quizUiState.value = state.copy(
+                currentIndex = nextIndex,
+                selectedAnswer = "",
+                isAnswerChecked = false,
+                isCorrect = false,
+                spellingGuessedLetters = emptyList()
+            )
+        } else {
+            _quizUiState.value = state.copy(isCompleted = true)
+            saveQuizSessionResults(state.score, state.questions.size)
+        }
+    }
+
+    private fun saveQuizSessionResults(score: Int, totalQuestions: Int) {
+        val userId = currentUserId ?: return
+
+        val xpGained = score * 10
+
+        repo.saveQuizResult(userId, score, totalQuestions)
+
+        if (xpGained > 0) {
+            repo.updateUserProgress(userId, xpGained) { newTotalXp ->
+                val newLevel = when {
+                    newTotalXp >= 5000 -> "Agellid n Izmawn"
+                    newTotalXp >= 1500 -> "Izem Amqran"
+                    newTotalXp >= 300 -> "Izem Anlmad"
+                    else -> "Izem Amezwaru"
+                }
+                repo.updateUserLevel(userId, newLevel)
+            }
+        }
+        repo.updateActiveDays(userId)
+    }
+
+    private fun generateDynamicQuiz(allWords: List<Word>): List<QuizQuestion> {
+        if (allWords.size < 4) return emptyList()
+
+        val quizWords = allWords.shuffled().take(10)
+
+        return quizWords.map { currentWord ->
+            val incorrectOptions = allWords
+                .filter { it.id != currentWord.id }
+                .shuffled()
+                .take(3)
+                .map { "${it.tifinagh} (${it.tamazight})" }
+
+            val correctAnswerText = "${currentWord.tifinagh} (${currentWord.tamazight})"
+            val options = (incorrectOptions + correctAnswerText).shuffled()
+
+            if (currentWord.imageUrl.isNotEmpty()) {
+                val randomChoice = (1..3).random()
+                when (randomChoice) {
+                    1 -> {
+                        QuizQuestion.TextQuestion(
+                            word = currentWord,
+                            options = options,
+                            correctAnswer = correctAnswerText
+                        )
+                    }
+                    2 -> {
+                        QuizQuestion.ImageQuestion(
+                            word = currentWord,
+                            imageUrl = currentWord.imageUrl,
+                            options = options,
+                            correctAnswer = correctAnswerText
+                        )
+                    }
+                    else -> {
+                        val targetWordText = currentWord.tifinagh.trim()
+
+                        val scrambled = targetWordText.filter { !it.isWhitespace() }
+                            .map { it.toString() }
+                            .shuffled()
+
+                        QuizQuestion.SpellingQuestion(
+                            word = currentWord,
+                            imageUrl = currentWord.imageUrl,
+                            correctAnswer = targetWordText,
+                            scrambledLetters = scrambled
+                        )
+                    }
+                }
+            } else {
+                QuizQuestion.TextQuestion(
+                    word = currentWord,
+                    options = options,
+                    correctAnswer = correctAnswerText
+                )
+            }
+        }
     }
 
     override fun onCleared() {
@@ -287,7 +483,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         wordsListener?.remove()
         profileListener?.remove()
         allWordsListener?.remove()
-        phrasesListener?.remove() // NEW
-        verbsListener?.remove()   // NEW
+        phrasesListener?.remove()
+        verbsListener?.remove()
+        leaderboardListener?.remove()
+        authStateListener?.let {
+            FirebaseAuth.getInstance().removeAuthStateListener(it)
+        }
+        authListener?.let { auth.removeAuthStateListener(it) }
     }
 }
