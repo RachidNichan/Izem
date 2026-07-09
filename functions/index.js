@@ -49,12 +49,14 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
                 notification: {
                     channelId: "izem_notifications",
                     sound: "default",
-                    clickAction: "TOP_LEVEL_SCREENS"
+                    clickAction: "LEADERBOARD_ACTION"
                 }
             },
             data: {
                 type: "roar",
-                senderName: senderName
+                senderName: senderName,
+                navigate_to: "leaderboard",
+                click_action: "LEADERBOARD_ACTION"
             }
         };
 

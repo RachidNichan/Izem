@@ -479,7 +479,12 @@ class AppViewModel @Inject constructor(
     }
 
     fun sendRoarChallenge(targetUserId: String, onResult: (Boolean) -> Unit) {
-        val senderId = currentUserId ?: return
+        val senderId = currentUserId
+        if (senderId == null) {
+            // android.util.Log.e("IzemInteraction", "Cannot send roar: currentUserId is NULL")
+            onResult(false)
+            return
+        }
         val senderName = _userProfile.value.displayName.ifEmpty { "Izem" }
 
         viewModelScope.launch {

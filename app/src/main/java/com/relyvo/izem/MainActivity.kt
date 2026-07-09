@@ -1,6 +1,7 @@
 package com.relyvo.izem
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,6 +13,7 @@ import com.relyvo.izem.ui.theme.IzemTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -28,6 +30,10 @@ import androidx.compose.ui.platform.LocalSavedStateRegistryOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
+val LocalActivity = staticCompositionLocalOf<androidx.activity.ComponentActivity> {
+    error("No Activity found")
+}
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
@@ -38,10 +44,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // android.util.Log.d("IzemNav", "MainActivity onNewIntent: type=${intent.getStringExtra("type")}")
+        setIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
+        // android.util.Log.d("IzemNav", "MainActivity onCreate: type=${intent.getStringExtra("type")}")
 
         var keepSplashOnScreen = true
         splashScreen.setKeepOnScreenCondition { keepSplashOnScreen }
@@ -71,6 +84,7 @@ class MainActivity : ComponentActivity() {
             IzemTheme {
                 @Suppress("DEPRECATION")
                 CompositionLocalProvider(
+                    LocalActivity provides this@MainActivity,
                     LocalLayoutDirection provides direction,
                     LocalContext provides context,
                     LocalActivityResultRegistryOwner provides this@MainActivity,

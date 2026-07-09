@@ -22,19 +22,28 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        remoteMessage.notification?.let {
-            showNotification(it.title ?: "Izem", it.body ?: "Time to learn!")
-        }
+        val title = remoteMessage.notification?.title ?: remoteMessage.data["title"] ?: "Izem"
+        val body = remoteMessage.notification?.body ?: remoteMessage.data["body"] ?: "Time to learn!"
+        
+        showNotification(title, body, remoteMessage.data)
     }
 
-    private fun showNotification(title: String, messageBody: String) {
+    private fun showNotification(title: String, messageBody: String, data: Map<String, String>) {
         val intent = Intent(this, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            action = "LEADERBOARD_ACTION"
+            
+            data.forEach { (key, value) ->
+                putExtra(key, value)
+            }
+            
+            putExtra("navigate_to", "leaderboard")
+            putExtra("type", "roar")
         }
 
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            this, 123, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
         val channelId = "izem_notifications"

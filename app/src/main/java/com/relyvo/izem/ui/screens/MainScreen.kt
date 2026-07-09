@@ -9,10 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -29,13 +31,57 @@ import com.relyvo.izem.ui.theme.IzemGreenDark
 import com.relyvo.izem.ui.theme.IzemOrange
 import com.relyvo.izem.viewmodel.AppViewModel
 
+import com.relyvo.izem.LocalActivity
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
+    val activity = LocalActivity.current
+    
+    // Determine the initial screen from the intent to avoid "jumping"
+    val initialRoute = remember {
+        val intent = activity.intent
+        if (intent?.getStringExtra("type") == "roar" || intent?.getStringExtra("navigate_to") == "leaderboard") {
+            Screen.Leaderboard.route
+        } else {
+            Screen.Categories.route
+        }
+    }
+
     val navController = rememberNavController()
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
     val isArabic by viewModel.isArabic.collectAsState()
+
+    // 1. Listen for new intents while the app is running (Background to Foreground)
+    DisposableEffect(activity) {
+        val listener = androidx.core.util.Consumer<android.content.Intent> { intent ->
+            val type = intent.getStringExtra("type")
+            val navigateTo = intent.getStringExtra("navigate_to")
+            android.util.Log.d("IzemNav", "onNewIntent received: type=$type, navigateTo=$navigateTo")
+            
+            if (type == "roar" || navigateTo == "leaderboard") {
+                try {
+                    navController.navigate(Screen.Leaderboard.route) {
+                        launchSingleTop = true
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("IzemNav", "Navigation error in onNewIntent: ${e.message}")
+                }
+            }
+        }
+        activity.addOnNewIntentListener(listener)
+        onDispose { activity.removeOnNewIntentListener(listener) }
+    }
+
+    // 2. Clear initial intent extras after handling them via initialRoute
+    LaunchedEffect(Unit) {
+        val intent = activity.intent
+        if (intent?.getStringExtra("type") == "roar" || intent?.getStringExtra("navigate_to") == "leaderboard") {
+            intent.removeExtra("type")
+            intent.removeExtra("navigate_to")
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.trackVisit()
@@ -136,7 +182,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
             Box(modifier = Modifier.weight(1f)) {
                 NavHost(
                     navController = navController,
-                    startDestination = Screen.Categories.route,
+                    startDestination = initialRoute,
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.98f) },
                     exitTransition = { fadeOut() }
                 ) {
