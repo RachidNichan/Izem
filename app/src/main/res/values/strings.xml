@@ -9,6 +9,8 @@
     <string name="nav_profile">Profile</string>
     <string name="nav_leaderboard">Leaderboard</string>
     <string name="leaderboard_roar_success">Challenge Roar sent successfully! 🦁</string>
+    <string name="leaderboard_roar_wait">You roared at this lion recently! Wait %1$d minutes to challenge again.</string>
+    <string name="leaderboard_roar_error">Error: Could not send roar. Check your connection.</string>
 
     <!-- Quiz Screen -->
     <string name="quiz_question_count">Question %1$s</string>

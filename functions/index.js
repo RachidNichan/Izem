@@ -9,10 +9,31 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
     const data = snapshot.data();
     if (!data) return null;
 
+    const senderId = data.senderId;
     const senderName = data.senderName;
     const targetId = data.targetId;
 
     try {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+        const interactionsSnapshot = await admin.firestore()
+            .collection("interactions")
+            .where("senderId", "==", senderId)
+            .where("targetId", "==", targetId)
+            .get();
+
+        const recentInteractions = interactionsSnapshot.docs.filter(doc => {
+            const timestamp = doc.data().timestamp;
+            if (!timestamp) return false;
+            const docDate = timestamp.toDate();
+            return docDate >= oneHourAgo;
+        });
+
+        if (recentInteractions.length > 1) {
+            console.log(`Notification blocked: Spam detected from ${senderId} to ${targetId}`);
+            return null;
+        }
+
         const userDoc = await admin.firestore().doc(`users/${targetId}`).get();
 
         if (!userDoc.exists) {

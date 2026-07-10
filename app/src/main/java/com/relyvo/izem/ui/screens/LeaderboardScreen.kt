@@ -41,6 +41,8 @@ fun LeaderboardScreen(
     val currentUserId = viewModel.currentUserId
     val context = LocalContext.current
     val roarSuccessMessage = stringResource(R.string.leaderboard_roar_success)
+    val roarErrorMessage = stringResource(R.string.leaderboard_roar_error)
+    val roarWaitFormat = stringResource(R.string.leaderboard_roar_wait)
 
     val currentUserRankIndex = users.indexOfFirst { it.userId == currentUserId }
     val currentUserProfile = users.find { it.userId == currentUserId }
@@ -79,50 +81,52 @@ fun LeaderboardScreen(
                     CircularProgressIndicator(color = IzemBlue)
                 }
             } else {
-                Column(modifier = Modifier.fillMaxSize()) {
+                val top3 = users.take(3)
+                val remainingUsers = users.drop(3)
+                val sharedPrefs = remember { context.getSharedPreferences("IzemRoarPrefs", android.content.Context.MODE_PRIVATE) }
 
-                    val top3 = users.take(3)
-                    if (top3.isNotEmpty()) {
-                        PodiumSection(top3 = top3)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 100.dp)
+                ) {
+                    item {
+                        if (top3.isNotEmpty()) {
+                            PodiumSection(top3 = top3)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    itemsIndexed(remainingUsers) { index, user ->
+                        val actualRank = index + 4
+                        val isMe = user.userId == currentUserId
+                        LeaderboardRow(
+                            rank = actualRank,
+                            user = user,
+                            isMe = isMe,
+                            onRoarClick = {
+                                val lastRoarTime = sharedPrefs.getLong("last_roar_${user.userId}", 0L)
+                                val oneHourInMillis = 60 * 60 * 1000L
+                                val timeElapsed = System.currentTimeMillis() - lastRoarTime
 
-                    val remainingUsers = users.drop(3)
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(bottom = 80.dp)
-                    ) {
-                        itemsIndexed(remainingUsers) { index, user ->
-                            val actualRank = index + 4
-                            val isMe = user.userId == currentUserId
-                            LeaderboardRow(
-                                rank = actualRank,
-                                user = user,
-                                isMe = isMe,
-                                onRoarClick = {
+                                if (timeElapsed < oneHourInMillis) {
+                                    val remainingMinutes = ((oneHourInMillis - timeElapsed) / (1000 * 60)) + 1
+                                    val waitMessage = roarWaitFormat.format(remainingMinutes)
+                                    Toast.makeText(context, waitMessage, Toast.LENGTH_LONG).show()
+                                } else {
                                     viewModel.sendRoarChallenge(user.userId) { success ->
                                         if (success) {
-                                            Toast.makeText(
-                                                context,
-                                                roarSuccessMessage,
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            sharedPrefs.edit().putLong("last_roar_${user.userId}", System.currentTimeMillis()).apply()
+                                            Toast.makeText(context, roarSuccessMessage, Toast.LENGTH_SHORT).show()
                                         } else {
-                                            Toast.makeText(
-                                                context,
-                                                "Error: Could not send roar. Check your connection.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            Toast.makeText(context, roarErrorMessage, Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
 
@@ -149,7 +153,7 @@ fun PodiumSection(top3: List<UserProfile>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
+            .padding(top = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.Bottom
     ) {
