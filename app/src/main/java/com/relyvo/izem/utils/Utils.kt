@@ -1,6 +1,7 @@
 package com.relyvo.izem.utils
 
 import android.content.Context
+import com.relyvo.izem.R
 
 object Utils {
     fun getDrawableId(context: Context, name: String): Int {
@@ -32,5 +33,21 @@ object Utils {
             currentContext = currentContext.baseContext
         }
         return null
+    }
+
+    fun getAvatarResource(avatarId: Int): Int {
+        return when (avatarId) {
+            1 -> R.drawable.avatar_01
+            2 -> R.drawable.avatar_02
+            3 -> R.drawable.avatar_03
+            4 -> R.drawable.avatar_04
+            5 -> R.drawable.avatar_05
+            6 -> R.drawable.avatar_06
+            7 -> R.drawable.avatar_07
+            8 -> R.drawable.avatar_08
+            9 -> R.drawable.avatar_09
+            10 -> R.drawable.avatar_10
+            else -> 0
+        }
     }
 }

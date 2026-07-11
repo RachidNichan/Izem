@@ -1,6 +1,8 @@
 package com.relyvo.izem.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +32,7 @@ import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.ui.theme.IzemBlue
 import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.ui.theme.IzemOrange
+import com.relyvo.izem.utils.Utils // استيراد كلاس الـ Utils لاستدعاء صور الأفاتار
 import com.relyvo.izem.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,7 +112,6 @@ fun LeaderboardScreen(
                             isMe = isMe,
                             onRoarClick = {
                                 val lastRoarTime = sharedPrefs.getLong("last_roar_${user.userId}", 0L)
-                                // Change to 0 for testing, change back to 60 * 60 * 1000L for production
                                 val cooldownTime = 60 * 60 * 1000L
                                 val timeElapsed = System.currentTimeMillis() - lastRoarTime
 
@@ -206,12 +209,21 @@ fun PodiumItem(
                 .border(2.dp, color, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Filled.EmojiEvents,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(28.dp)
-            )
+            val avatarRes = Utils.getAvatarResource(user.avatarId)
+            if (avatarRes != 0) {
+                Image(
+                    painter = painterResource(id = avatarRes),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().padding(4.dp)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.EmojiEvents,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -292,19 +304,28 @@ fun LeaderboardRow(
                 color = if (isMe) IzemBlue else MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                val firstChar = if (user.displayName.isNotEmpty()) user.displayName.take(1) else "I"
-                Text(
-                    text = firstChar.uppercase(),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer
+            val avatarRes = Utils.getAvatarResource(user.avatarId)
+            if (avatarRes != 0) {
+                Image(
+                    painter = painterResource(id = avatarRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(36.dp).clip(CircleShape)
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val firstChar = if (user.displayName.isNotEmpty()) user.displayName.take(1) else "I"
+                    Text(
+                        text = firstChar.uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(12.dp))

@@ -503,6 +503,11 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    fun updateAvatarId(avatarId: Int, onComplete: (Boolean) -> Unit) {
+        val uid = currentUserId ?: return
+        repo.updateAvatarId(uid, avatarId, onComplete)
+    }
+
     override fun onCleared() {
         super.onCleared()
         wordsListener?.remove()

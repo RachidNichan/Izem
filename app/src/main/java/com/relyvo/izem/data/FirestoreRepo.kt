@@ -340,4 +340,12 @@ class FirestoreRepo {
         }
     }
 
+    fun updateAvatarId(userId: String, avatarId: Int, onComplete: (Boolean) -> Unit) {
+        db.collection("users").document(userId)
+            .update("avatarId", avatarId)
+            .addOnCompleteListener { task ->
+                onComplete(task.isSuccessful)
+            }
+    }
+
 }

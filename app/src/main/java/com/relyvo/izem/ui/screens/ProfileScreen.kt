@@ -7,7 +7,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +28,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -38,6 +42,8 @@ import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.ui.modal.AuthBottomSheet
 import com.relyvo.izem.ui.modal.ProfileAuthCTA
 import com.relyvo.izem.R
+import com.relyvo.izem.ui.modal.AvatarSelectionSheet
+import com.relyvo.izem.utils.Utils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +61,7 @@ fun ProfileScreen(
     val scrollState = rememberScrollState()
 
     var showEditNameDialog by remember { mutableStateOf(false) }
+    var showAvatarSheet by remember { mutableStateOf(false) }
     var tempName by remember(userProfile.displayName) { mutableStateOf(userProfile.displayName) }
 
     val gso = remember {
@@ -132,6 +139,22 @@ fun ProfileScreen(
         )
     }
 
+    if (showAvatarSheet) {
+        AvatarSelectionSheet(
+            currentAvatarId = userProfile.avatarId,
+            isArabic = isArabic,
+            onDismiss = { showAvatarSheet = false },
+            onAvatarSelected = { selectedId ->
+                viewModel.updateAvatarId(selectedId) { success ->
+                    if (success) {
+                        showAvatarSheet = false
+                        Toast.makeText(context, if (isArabic) "تم تحديث الرمز التعبيري بنجاح!" else "Avatar updated successfully!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -190,20 +213,65 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // --- ? Avatar ---
+        // --- Avatar Box with Floating Edit Badge (Unclipped) ---
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(150.dp)
-                .shadow(20.dp, CircleShape, ambientColor = IzemGold, spotColor = IzemGold)
-                .background(
-                    brush = Brush.linearGradient(colors = listOf(IzemGold, IzemGold.copy(alpha = 0.5f))),
-                    shape = CircleShape
-                )
-                .padding(4.dp)
-                .background(MaterialTheme.colorScheme.surface, CircleShape)
+            modifier = Modifier.size(150.dp)
         ) {
-            Icon(imageVector = Icons.Default.Person, contentDescription = null, modifier = Modifier.size(90.dp), tint = IzemGold)
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .shadow(20.dp, CircleShape, ambientColor = IzemGold, spotColor = IzemGold)
+                    .background(
+                        brush = Brush.linearGradient(colors = listOf(IzemGold, IzemGold.copy(alpha = 0.5f))),
+                        shape = CircleShape
+                    )
+                    .padding(4.dp)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
+                    .clickable { showAvatarSheet = true }
+            ) {
+                val avatarRes = Utils.getAvatarResource(userProfile.avatarId)
+                if (avatarRes != 0) {
+                    Image(
+                        painter = painterResource(id = avatarRes),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize().padding(12.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val firstChar = if (userProfile.displayName.isNotEmpty()) userProfile.displayName.take(1) else "I"
+                        Text(
+                            text = firstChar.uppercase(),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = (-4).dp, y = (-4).dp)
+                    .size(36.dp)
+                    .background(IzemGold, CircleShape)
+                    .border(2.5.dp, MaterialTheme.colorScheme.surface, CircleShape)
+                    .clickable { showAvatarSheet = true },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Avatar",
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
