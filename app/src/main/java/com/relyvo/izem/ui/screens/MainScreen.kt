@@ -22,6 +22,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.activity.compose.BackHandler
+import com.relyvo.izem.utils.InterstitialAdManager
 import com.relyvo.izem.model.Word
 import com.relyvo.izem.ui.modal.ContributionSheet
 import com.relyvo.izem.ui.theme.IzemBlue
@@ -153,7 +155,12 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                                 if (currentRoute == Screen.Leaderboard.route && screen == Screen.Profile) {
                                     navController.popBackStack(Screen.Profile.route, inclusive = false)
                                 } else if (currentRoute?.startsWith("word_list") == true && screen == Screen.Categories) {
-                                    navController.popBackStack(Screen.Categories.route, inclusive = false)
+                                    InterstitialAdManager.showInterstitial(
+                                        activity,
+                                        InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
+                                    ) {
+                                        navController.popBackStack(Screen.Categories.route, inclusive = false)
+                                    }
                                 } else {
                                     val isLearnTab = screen == Screen.Categories
 
@@ -192,6 +199,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                             isArabic = isArabic,
                             onCategoryClick = { categoryId ->
                                 viewModel.listenWordsByCategory(categoryId)
+                                InterstitialAdManager.loadInterstitial(activity, InterstitialAdManager.AD_UNIT_WORD_LIST_BACK)
                                 navController.navigate("word_list/$categoryId")
                             },
                             onLanguageToggle = { viewModel.toggleLanguage() }
@@ -202,6 +210,15 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                         val categoryId = backStackEntry.arguments?.getString("categoryId") ?: ""
                         var selectedWordForCorrection by remember { mutableStateOf<Word?>(null) }
                         var showSheet by remember { mutableStateOf(false) }
+
+                        BackHandler {
+                            InterstitialAdManager.showInterstitial(
+                                activity,
+                                InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
+                            ) {
+                                navController.popBackStack()
+                            }
+                        }
 
                         Box(modifier = Modifier.fillMaxSize()) {
                             if (categoryId == "alphabet") {
@@ -280,19 +297,6 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                             }
                         )
                     }
-                }
-            }
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            ) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    contentAlignment = androidx.compose.ui.Alignment.Center
-                ) {
-                    AdmobBanner()
                 }
             }
         }

@@ -28,8 +28,10 @@ class IzemApp : Application() {
             .build()
         FirebaseFirestore.getInstance().firestoreSettings = settings
 
-        MobileAds.initialize(this) {}
-        InterstitialAdManager.loadInterstitial(this)
+        MobileAds.initialize(this) {
+            InterstitialAdManager.loadInterstitial(this, InterstitialAdManager.AD_UNIT_QUIZ)
+            InterstitialAdManager.loadInterstitial(this, InterstitialAdManager.AD_UNIT_WORD_LIST_BACK)
+        }
 
         createNotificationChannel()
 

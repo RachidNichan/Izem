@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.relyvo.izem.LocalActivity
 import com.relyvo.izem.R
 import com.relyvo.izem.model.QuizQuestion
 import com.relyvo.izem.model.IndexedLetter
@@ -56,10 +57,11 @@ fun QuizScreen(
     onBackToMenu: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val quizWordsBase by viewModel.allWords.collectAsStateWithLifecycle()
     val quizState by viewModel.quizUiState.collectAsStateWithLifecycle()
 
-    val totalQuestions = 10
+    val totalQuestions = quizState.questions.size.coerceAtLeast(1)
     val progress by animateFloatAsState(
         targetValue = if (quizState.questions.isNotEmpty()) {
             (quizState.currentIndex + 1).toFloat() / totalQuestions
@@ -86,6 +88,7 @@ fun QuizScreen(
     LaunchedEffect(quizWordsBase) {
         if (quizWordsBase.isNotEmpty() && quizState.questions.isEmpty()) {
             viewModel.startNewQuiz()
+            InterstitialAdManager.loadInterstitial(context)
         }
     }
 
@@ -259,11 +262,9 @@ fun QuizScreen(
                         } else {
                             val isLastQuestion = quizState.currentIndex == totalQuestions - 1
                             if (isLastQuestion) {
-                                Utils.findActivity(context)?.let { activity ->
-                                    InterstitialAdManager.showInterstitial(activity) {
-                                        viewModel.moveToNextQuestion()
-                                    }
-                                } ?: viewModel.moveToNextQuestion()
+                                InterstitialAdManager.showInterstitial(activity) {
+                                    viewModel.moveToNextQuestion()
+                                }
                             } else {
                                 viewModel.moveToNextQuestion()
                             }
