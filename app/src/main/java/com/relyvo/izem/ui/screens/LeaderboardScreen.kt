@@ -108,11 +108,12 @@ fun LeaderboardScreen(
                             isMe = isMe,
                             onRoarClick = {
                                 val lastRoarTime = sharedPrefs.getLong("last_roar_${user.userId}", 0L)
-                                val oneHourInMillis = 60 * 60 * 1000L
+                                // Change to 0 for testing, change back to 60 * 60 * 1000L for production
+                                val cooldownTime = 60 * 60 * 1000L
                                 val timeElapsed = System.currentTimeMillis() - lastRoarTime
 
-                                if (timeElapsed < oneHourInMillis) {
-                                    val remainingMinutes = ((oneHourInMillis - timeElapsed) / (1000 * 60)) + 1
+                                if (timeElapsed < cooldownTime) {
+                                    val remainingMinutes = ((cooldownTime - timeElapsed) / (1000 * 60)) + 1
                                     val waitMessage = roarWaitFormat.format(remainingMinutes)
                                     Toast.makeText(context, waitMessage, Toast.LENGTH_LONG).show()
                                 } else {

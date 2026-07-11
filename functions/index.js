@@ -14,28 +14,27 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
     const targetId = data.targetId;
 
     try {
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        // 1. Spam Check: Only allow one notification per hour between the same two users
 
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
         const interactionsSnapshot = await admin.firestore()
             .collection("interactions")
-            .where("senderId", "==", senderId)
             .where("targetId", "==", targetId)
             .get();
 
-        const recentInteractions = interactionsSnapshot.docs.filter(doc => {
-            const timestamp = doc.data().timestamp;
-            if (!timestamp) return false;
-            const docDate = timestamp.toDate();
-            return docDate >= oneHourAgo;
-        });
+        const recentCount = interactionsSnapshot.docs.filter(doc => {
+            const d = doc.data();
+            const ts = d.timestamp ? d.timestamp.toDate().getTime() : Date.now();
+            return d.senderId === senderId && ts >= oneHourAgo;
+        }).length;
 
-        if (recentInteractions.length > 1) {
-            console.log(`Notification blocked: Spam detected from ${senderId} to ${targetId}`);
+        if (recentCount > 1) {
+            console.log(`Spam check: Already sent a roar from ${senderId} to ${targetId} in the last hour. Skipping notification.`);
             return null;
         }
 
+        // 2. Fetch Target User Data
         const userDoc = await admin.firestore().doc(`users/${targetId}`).get();
-
         if (!userDoc.exists) {
             console.log(`User ${targetId} not found.`);
             return null;
@@ -43,7 +42,6 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
 
         const userData = userDoc.data();
         const fcmToken = userData.fcmToken;
-
         const userLanguage = userData.language || "en";
 
         if (!fcmToken) {
@@ -51,6 +49,7 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
             return null;
         }
 
+        // 3. Prepare Notification
         let notificationTitle = "🦁 Challenge Roar!";
         let notificationBody = `${senderName} roared at you on the leaderboard! Take a quiz now to challenge them.`;
 
@@ -81,11 +80,12 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
             }
         };
 
+        // 4. Send Message
         await admin.messaging().send(message);
         console.log(`Successfully sent (${userLanguage}) notification to user: ${targetId}`);
 
     } catch (error) {
-        console.error("Error sending notification:", error);
+        console.error("Error in onInteractionCreated:", error);
     }
     return null;
 });
