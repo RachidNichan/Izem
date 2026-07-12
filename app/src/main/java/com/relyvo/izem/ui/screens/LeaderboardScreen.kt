@@ -29,10 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.relyvo.izem.R
 import com.relyvo.izem.model.UserProfile
+import com.relyvo.izem.ui.components.getLocalizedLevel
 import com.relyvo.izem.ui.theme.IzemBlue
 import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.ui.theme.IzemOrange
-import com.relyvo.izem.utils.Utils // استيراد كلاس الـ Utils لاستدعاء صور الأفاتار
+import com.relyvo.izem.utils.Utils
 import com.relyvo.izem.viewmodel.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -411,17 +412,5 @@ fun StickyUserCard(
                 fontSize = 16.sp
             )
         }
-    }
-}
-
-@Composable
-private fun getLocalizedLevel(level: String): String {
-    return when (level) {
-        "Izem Amezwaru" -> stringResource(R.string.level_azemwaru)
-        "Izem Anlmad" -> stringResource(R.string.level_anlmad)
-        "Izem Amqran" -> stringResource(R.string.level_amqran)
-        "Agellid n Izmawn" -> stringResource(R.string.level_agellid)
-        "Izem" -> stringResource(R.string.level_izem)
-        else -> level
     }
 }

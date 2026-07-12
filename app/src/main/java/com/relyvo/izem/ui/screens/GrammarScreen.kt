@@ -49,7 +49,10 @@ fun GrammarScreen(
     val phrases by viewModel.phrases.collectAsStateWithLifecycle()
 
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    val tabs = listOf(stringResource(R.string.grammar_verbs), stringResource(R.string.grammar_phrases))
+    val tabs = listOf(
+        if (isArabic) "الأفعال" else stringResource(R.string.grammar_verbs),
+        if (isArabic) "العبارات" else stringResource(R.string.grammar_phrases)
+    )
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var selectedVerb by remember { mutableStateOf<Verb?>(null) }
@@ -133,8 +136,18 @@ fun VerbsList(
     onVerbClick: (Verb) -> Unit
 ) {
     if (verbs.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             CircularProgressIndicator(color = accentColor)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = if (isArabic) "جاري تحميل الأفعال..." else stringResource(R.string.grammar_loading_verbs),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     } else {
         LazyColumn(
@@ -249,7 +262,7 @@ fun VerbDetailContent(verb: Verb, isArabic: Boolean, accentColor: Color) {
                 ) {
                     Icon(
                         Icons.Default.PlayArrow,
-                        contentDescription = "Play",
+                        contentDescription = stringResource(R.string.common_play),
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -268,21 +281,21 @@ fun VerbDetailContent(verb: Verb, isArabic: Boolean, accentColor: Color) {
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 TenseTab(
-                    text = stringResource(R.string.grammar_past),
+                    text = if (isArabic) "الماضي" else stringResource(R.string.grammar_past),
                     isSelected = selectedTense == "past",
                     accentColor = accentColor,
                     modifier = Modifier.weight(1f)
                 ) { selectedTense = "past" }
 
                 TenseTab(
-                    text = stringResource(R.string.grammar_present),
+                    text = if (isArabic) "المضارع" else stringResource(R.string.grammar_present),
                     isSelected = selectedTense == "present",
                     accentColor = accentColor,
                     modifier = Modifier.weight(1f)
                 ) { selectedTense = "present" }
 
                 TenseTab(
-                    text = stringResource(R.string.grammar_future),
+                    text = if (isArabic) "المستقبل" else stringResource(R.string.grammar_future),
                     isSelected = selectedTense == "future",
                     accentColor = accentColor,
                     modifier = Modifier.weight(1f)
@@ -378,8 +391,18 @@ fun TenseTab(
 @Composable
 fun PhrasesList(phrases: List<Phrase>, isArabic: Boolean, accentColor: Color) {
     if (phrases.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             CircularProgressIndicator(color = accentColor)
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = if (isArabic) "جاري تحميل العبارات..." else stringResource(R.string.grammar_loading_phrases),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     } else {
         LazyColumn(
@@ -438,7 +461,7 @@ fun PhraseCard(phrase: Phrase, isArabic: Boolean, accentColor: Color) {
                         ),
                         modifier = Modifier.size(44.dp)
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                        Icon(Icons.Default.PlayArrow, contentDescription = stringResource(R.string.common_play))
                     }
                 }
             }

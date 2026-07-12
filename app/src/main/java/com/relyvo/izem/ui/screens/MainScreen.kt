@@ -100,8 +100,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
         bottomBar = {
             Surface(
                 tonalElevation = 8.dp,
-                shadowElevation = 16.dp,
-                modifier = Modifier.navigationBarsPadding()
+                shadowElevation = 16.dp
             ) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,

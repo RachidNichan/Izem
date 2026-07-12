@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,10 +67,9 @@ fun CategoryScreen(
     Scaffold(
         topBar = {
             CategoryHeader(
-                isArabic = isArabic,
                 onLanguageToggle = onLanguageToggle,
                 onFeedbackClick = { sendFeedback(context) },
-                onShareClick = { shareApp(context, isArabic) }
+                onShareClick = { shareApp(context) }
             )
         }
     ) { paddingValues ->
@@ -92,7 +92,7 @@ fun CategoryScreen(
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 32.dp, bottom = 120.dp),
+                contentPadding = PaddingValues(top = 32.dp, bottom = 100.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 itemsIndexed(categoriesList) { index, category ->
@@ -124,16 +124,17 @@ fun CategoryScreen(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
+                    .navigationBarsPadding()
                     .padding(16.dp)
             ) {
-                MascotSpeechBubble(isArabic)
+                MascotSpeechBubble()
             }
         }
     }
 }
 
 @Composable
-fun MascotSpeechBubble(isArabic: Boolean) {
+fun MascotSpeechBubble() {
     val isDark = isSystemInDarkTheme()
     Row(verticalAlignment = Alignment.Bottom) {
         Surface(
@@ -157,7 +158,7 @@ fun MascotSpeechBubble(isArabic: Boolean) {
                 .shadow(4.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp))
         ) {
             Text(
-                text = if (isArabic) "أزول! فلنتعلم معاً!" else "Azul! Let's learn!",
+                text = stringResource(R.string.mascot_greeting),
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Bold,
@@ -225,7 +226,6 @@ fun CategoryPathItem(
 
 @Composable
 fun CategoryHeader(
-    isArabic: Boolean,
     onLanguageToggle: () -> Unit,
     onFeedbackClick: () -> Unit,
     onShareClick: () -> Unit
@@ -246,14 +246,14 @@ fun CategoryHeader(
         ) {
             Column {
                 Text(
-                    text = "Izem",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Black,
                     color = contentColor,
                     letterSpacing = (-1).sp
                 )
                 Text(
-                    text = if (isArabic) "تعلم الأمازيغية" else "Learn Tamazight",
+                    text = stringResource(R.string.learn_tamazight),
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.7f)
                 )
@@ -269,7 +269,7 @@ fun CategoryHeader(
                     )
                 ) {
                     Text(
-                        text = if (isArabic) "EN" else "AR",
+                        text = stringResource(R.string.lang_toggle),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -283,7 +283,7 @@ fun CategoryHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Email,
-                        contentDescription = "Feedback",
+                        contentDescription = stringResource(R.string.feedback),
                         tint = contentColor
                     )
                 }
@@ -294,7 +294,7 @@ fun CategoryHeader(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
-                        contentDescription = "Share",
+                        contentDescription = stringResource(R.string.share),
                         tint = contentColor
                     )
                 }
@@ -303,20 +303,16 @@ fun CategoryHeader(
     }
 }
 
-fun shareApp(context: Context, isArabic: Boolean) {
+fun shareApp(context: Context) {
     val appPackageName = context.packageName
-    val message = if (isArabic) {
-        "أزول! أنا أتعلم اللغة الأمازيغية مع تطبيق إيزم الرائع. حمله الآن من هنا:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
-    } else {
-        "Azul! I'm learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=$appPackageName"
-    }
+    val message = context.getString(R.string.share_message, appPackageName)
     
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         putExtra(Intent.EXTRA_TEXT, message)
         type = "text/plain"
     }
     
-    val shareIntent = Intent.createChooser(sendIntent, if (isArabic) "مشاركة تطبيق إيزم عبر" else "Share Izem via").apply {
+    val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_chooser_title)).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     
@@ -329,7 +325,7 @@ fun shareApp(context: Context, isArabic: Boolean) {
 
 fun sendFeedback(context: Context) {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:izem@relyvo.com?subject=${Uri.encode("Izem App Feedback")}")
+        data = Uri.parse("mailto:izem@relyvo.com?subject=${Uri.encode(context.getString(R.string.email_subject))}")
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     try {

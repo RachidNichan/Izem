@@ -61,6 +61,7 @@
     <string name="common_save_account">Save Account</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_or">OR</string>
+    <string name="common_play">Play</string>
 
     <!-- Grammar -->
     <string name="grammar_verbs">Verbs</string>
@@ -84,4 +85,14 @@
     <string name="contribution_audio_required">⚠️ Please add an audio recording</string>
     <string name="contribution_success">Thank you! Your suggestion is under review. 🦁</string>
     <string name="contribution_submit">Submit for Review</string>
+
+    <!-- Category Screen -->
+    <string name="mascot_greeting">Azul! Let\'s learn!</string>
+    <string name="learn_tamazight">Learn Tamazight</string>
+    <string name="feedback">Feedback</string>
+    <string name="share">Share</string>
+    <string name="share_message">Azul! I\'m learning Tamazight with Izem app. Check it out:\nhttps://play.google.com/store/apps/details?id=%1$s</string>
+    <string name="share_chooser_title">Share Izem via</string>
+    <string name="email_subject">Izem App Feedback</string>
+    <string name="lang_toggle">AR</string>
 </resources>

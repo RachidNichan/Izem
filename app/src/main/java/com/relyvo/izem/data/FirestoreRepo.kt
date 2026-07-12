@@ -218,11 +218,13 @@ class FirestoreRepo {
         userRef.get().addOnSuccessListener { snapshot ->
             val data = if (snapshot.exists() && snapshot.contains("displayName")) {
                 hashMapOf(
+                    "email" to (user.email ?: ""),
                     "lastActive" to Timestamp.now()
                 )
             } else {
                 hashMapOf(
                     "displayName" to (user.displayName ?: "Izem"),
+                    "email" to (user.email ?: ""),
                     "lastActive" to Timestamp.now()
                 )
             }

@@ -409,10 +409,10 @@ class AppViewModel @Inject constructor(
         if (xpGained > 0) {
             repo.updateUserProgress(userId, xpGained) { newTotalXp ->
                 val newLevel = when {
-                    newTotalXp >= 5000 -> "Agellid n Izmawn"
-                    newTotalXp >= 1500 -> "Izem Amqran"
-                    newTotalXp >= 300 -> "Izem Anlmad"
-                    else -> "Izem Amezwaru"
+                    newTotalXp >= 5000 -> "level_4" // Agellid n Izmawn
+                    newTotalXp >= 1500 -> "level_3" // Izem Amqran
+                    newTotalXp >= 300  -> "level_2" // Izem Anlmad
+                    else -> "level_1"               // Izem Amezwaru
                 }
                 repo.updateUserLevel(userId, newLevel)
             }

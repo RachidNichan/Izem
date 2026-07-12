@@ -61,6 +61,7 @@
     <string name="common_save_account">حفظ الحساب</string>
     <string name="common_cancel">إلغاء</string>
     <string name="common_or">أو</string>
+    <string name="common_play">تشغيل</string>
 
     <!-- Grammar -->
     <string name="grammar_verbs">الأفعال</string>
@@ -84,4 +85,14 @@
     <string name="contribution_audio_required">⚠️ يرجى إضافة تسجيل صوتي للكلمة</string>
     <string name="contribution_success">شكراً لمساهمتك! سيتم مراجعة اقتراحك. 🦁</string>
     <string name="contribution_submit">إرسال للمراجعة</string>
+
+    <!-- Category Screen -->
+    <string name="mascot_greeting">أزول! فلنتعلم معاً!</string>
+    <string name="learn_tamazight">تعلم الأمازيغية</string>
+    <string name="feedback">إرسال ملاحظات</string>
+    <string name="share">مشاركة</string>
+    <string name="share_message">أزول! أنا أتعلم اللغة الأمازيغية مع تطبيق إيزم الرائع. حمله الآن من هنا:\nhttps://play.google.com/store/apps/details?id=%1$s</string>
+    <string name="share_chooser_title">مشاركة تطبيق إيزم عبر</string>
+    <string name="email_subject">ملاحظات حول تطبيق إيزم</string>
+    <string name="lang_toggle">EN</string>
 </resources>

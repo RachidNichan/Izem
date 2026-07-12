@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.relyvo.izem.viewmodel.AppViewModel
+import com.relyvo.izem.ui.components.getLocalizedLevel
 import com.relyvo.izem.ui.theme.IzemGold
 import com.relyvo.izem.ui.modal.AuthBottomSheet
 import com.relyvo.izem.ui.modal.ProfileAuthCTA
@@ -410,17 +411,5 @@ fun StatMiniBox(label: String, value: String, color: Color) {
     Column(horizontalAlignment = Alignment.Start) {
         Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.Bold)
         Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, color = color)
-    }
-}
-
-@Composable
-private fun getLocalizedLevel(level: String): String {
-    return when (level) {
-        "Izem Amezwaru" -> stringResource(R.string.level_azemwaru)
-        "Izem Anlmad" -> stringResource(R.string.level_anlmad)
-        "Izem Amqran" -> stringResource(R.string.level_amqran)
-        "Agellid n Izmawn" -> stringResource(R.string.level_agellid)
-        "Izem" -> stringResource(R.string.level_izem)
-        else -> level
     }
 }
