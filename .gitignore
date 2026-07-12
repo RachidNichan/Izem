@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+service-account.json
+firestore_backup
+node_modules
