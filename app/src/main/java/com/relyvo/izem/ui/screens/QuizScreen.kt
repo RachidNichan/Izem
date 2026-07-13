@@ -60,6 +60,7 @@ fun QuizScreen(
     val activity = LocalActivity.current
     val quizWordsBase by viewModel.allWords.collectAsStateWithLifecycle()
     val quizState by viewModel.quizUiState.collectAsStateWithLifecycle()
+    val userProfile by viewModel.userProfile.collectAsStateWithLifecycle()
 
     val totalQuestions = quizState.questions.size.coerceAtLeast(1)
     val progress by animateFloatAsState(
@@ -88,7 +89,9 @@ fun QuizScreen(
     LaunchedEffect(quizWordsBase) {
         if (quizWordsBase.isNotEmpty() && quizState.questions.isEmpty()) {
             viewModel.startNewQuiz()
-            InterstitialAdManager.loadInterstitial(context)
+            if (!userProfile.isPremium) {
+                InterstitialAdManager.loadInterstitial(context)
+            }
         }
     }
 
@@ -262,7 +265,11 @@ fun QuizScreen(
                         } else {
                             val isLastQuestion = quizState.currentIndex == totalQuestions - 1
                             if (isLastQuestion) {
-                                InterstitialAdManager.showInterstitial(activity) {
+                                if (!userProfile.isPremium) {
+                                    InterstitialAdManager.showInterstitial(activity) {
+                                        viewModel.moveToNextQuestion()
+                                    }
+                                } else {
                                     viewModel.moveToNextQuestion()
                                 }
                             } else {

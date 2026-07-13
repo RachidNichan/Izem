@@ -54,6 +54,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
     val isArabic by viewModel.isArabic.collectAsState()
+    val userProfile by viewModel.userProfile.collectAsState()
 
     // 1. Listen for new intents while the app is running (Background to Foreground)
     DisposableEffect(activity) {
@@ -99,8 +100,8 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
     Scaffold(
         bottomBar = {
             Surface(
-                tonalElevation = 8.dp,
-                shadowElevation = 16.dp
+                tonalElevation = 4.dp,
+                shadowElevation = 8.dp
             ) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -154,10 +155,14 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                                 if (currentRoute == Screen.Leaderboard.route && screen == Screen.Profile) {
                                     navController.popBackStack(Screen.Profile.route, inclusive = false)
                                 } else if (currentRoute?.startsWith("word_list") == true && screen == Screen.Categories) {
-                                    InterstitialAdManager.showInterstitial(
-                                        activity,
-                                        InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
-                                    ) {
+                                    if (!userProfile.isPremium) {
+                                        InterstitialAdManager.showInterstitial(
+                                            activity,
+                                            InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
+                                        ) {
+                                            navController.popBackStack(Screen.Categories.route, inclusive = false)
+                                        }
+                                    } else {
                                         navController.popBackStack(Screen.Categories.route, inclusive = false)
                                     }
                                 } else {
@@ -198,7 +203,9 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                             isArabic = isArabic,
                             onCategoryClick = { categoryId ->
                                 viewModel.listenWordsByCategory(categoryId)
-                                InterstitialAdManager.loadInterstitial(activity, InterstitialAdManager.AD_UNIT_WORD_LIST_BACK)
+                                if (!userProfile.isPremium) {
+                                    InterstitialAdManager.loadInterstitial(activity, InterstitialAdManager.AD_UNIT_WORD_LIST_BACK)
+                                }
                                 navController.navigate("word_list/$categoryId")
                             },
                             onLanguageToggle = { viewModel.toggleLanguage() }
@@ -211,10 +218,14 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                         var showSheet by remember { mutableStateOf(false) }
 
                         BackHandler {
-                            InterstitialAdManager.showInterstitial(
-                                activity,
-                                InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
-                            ) {
+                            if (!userProfile.isPremium) {
+                                InterstitialAdManager.showInterstitial(
+                                    activity,
+                                    InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
+                                ) {
+                                    navController.popBackStack()
+                                }
+                            } else {
                                 navController.popBackStack()
                             }
                         }

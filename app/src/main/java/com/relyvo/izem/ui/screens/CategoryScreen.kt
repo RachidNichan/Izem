@@ -140,7 +140,8 @@ fun MascotSpeechBubble() {
         Surface(
             shape = CircleShape,
             color = if (isDark) Color(0xFF333333) else Color.White,
-            modifier = Modifier.size(80.dp).shadow(4.dp, CircleShape)
+            modifier = Modifier.size(80.dp),
+            shadowElevation = 4.dp
         ) {
             Image(
                 painter = painterResource(id = R.drawable.izem_mascot),
@@ -154,8 +155,8 @@ fun MascotSpeechBubble() {
             shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp),
             color = if (isDark) Color(0xFF444444) else Color.White,
             modifier = Modifier
-                .padding(start = 4.dp, bottom = 40.dp)
-                .shadow(4.dp, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp))
+                .padding(start = 4.dp, bottom = 40.dp),
+            shadowElevation = 4.dp
         ) {
             Text(
                 text = stringResource(R.string.mascot_greeting),
@@ -186,10 +187,10 @@ fun CategoryPathItem(
         Surface(
             modifier = Modifier
                 .size(80.dp)
-                .shadow(8.dp, CircleShape)
                 .clickable { onClick() },
             shape = CircleShape,
             color = if (isDark) Color(0xFF2C2C2C) else Color.White,
+            shadowElevation = 6.dp,
             border = BorderStroke(3.dp, if (isDark) IzemBlue.copy(alpha = 0.5f) else Color(0xFFE0E0E0))
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -211,7 +212,7 @@ fun CategoryPathItem(
         Surface(
             shape = RoundedCornerShape(16.dp),
             color = if (isDark) IzemBlue.copy(alpha = 0.8f) else IzemBlue,
-            modifier = Modifier.shadow(2.dp, RoundedCornerShape(16.dp))
+            shadowElevation = 2.dp
         ) {
             Text(
                 text = if (isArabic) category.titleAr else category.titleEn,

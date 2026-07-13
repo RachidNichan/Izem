@@ -18,14 +18,16 @@ import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Executors
 
 class FirestoreRepo {
 
     private val db = FirebaseFirestore.getInstance()
+    private val executor = Executors.newSingleThreadExecutor()
 
     fun listenCategories(onResult: (List<Category>) -> Unit): ListenerRegistration {
         return db.collection("categories")
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
                     return@addSnapshotListener
@@ -44,7 +46,7 @@ class FirestoreRepo {
         return db.collection("words")
             .whereEqualTo("categoryId", categoryId)
             .orderBy("createdAt", Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
                     return@addSnapshotListener
@@ -63,7 +65,7 @@ class FirestoreRepo {
         onResult: (List<Word>) -> Unit
     ): ListenerRegistration {
         return db.collection("words")
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     onResult(emptyList())
                     return@addSnapshotListener
@@ -127,7 +129,7 @@ class FirestoreRepo {
 
     fun listenToUserProfile(userId: String, onResult: (UserProfile) -> Unit): ListenerRegistration {
         return db.collection("users").document(userId)
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     return@addSnapshotListener
                 }
@@ -219,13 +221,15 @@ class FirestoreRepo {
             val data = if (snapshot.exists() && snapshot.contains("displayName")) {
                 hashMapOf(
                     "email" to (user.email ?: ""),
-                    "lastActive" to Timestamp.now()
+                    "lastActive" to Timestamp.now(),
+                    "isPremium" to (snapshot.getBoolean("isPremium") ?: false)
                 )
             } else {
                 hashMapOf(
                     "displayName" to (user.displayName ?: "Izem"),
                     "email" to (user.email ?: ""),
-                    "lastActive" to Timestamp.now()
+                    "lastActive" to Timestamp.now(),
+                    "isPremium" to false
                 )
             }
 
@@ -254,7 +258,7 @@ class FirestoreRepo {
             query = query.whereEqualTo("categoryId", categoryId)
         }
 
-        return query.addSnapshotListener { snapshot, error ->
+        return query.addSnapshotListener(executor) { snapshot, error ->
             if (error != null) {
                 println("❌ Error listening to phrases: ${error.message}")
                 onResult(emptyList())
@@ -277,7 +281,7 @@ class FirestoreRepo {
     ): ListenerRegistration {
 
         return db.collection("verbs")
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     println("❌ Error listening to verbs: ${error.message}")
                     onResult(emptyList())
@@ -301,7 +305,7 @@ class FirestoreRepo {
         return db.collection("users")
             .orderBy("totalXP", Query.Direction.DESCENDING)
             .limit(limit)
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {
                     println("❌ Error listening to leaderboard: ${error.message}")
                     onResult(emptyList())
