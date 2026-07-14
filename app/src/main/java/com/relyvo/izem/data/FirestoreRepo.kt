@@ -317,7 +317,7 @@ class FirestoreRepo {
                 if (snapshot != null) {
                     val list = snapshot.documents.mapNotNull { doc ->
                         doc.toObject<UserProfile>()?.copy(userId = doc.id)
-                    }
+                    }.filter { !it.isBanned }
                     onResult(list)
                 } else {
                     onResult(emptyList())
