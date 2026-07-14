@@ -222,14 +222,16 @@ class FirestoreRepo {
                 hashMapOf(
                     "email" to (user.email ?: ""),
                     "lastActive" to Timestamp.now(),
-                    "isPremium" to (snapshot.getBoolean("isPremium") ?: false)
+                    "isPremium" to (snapshot.getBoolean("isPremium") ?: false),
+                    "isBanned" to (snapshot.getBoolean("isBanned") ?: false)
                 )
             } else {
                 hashMapOf(
                     "displayName" to (user.displayName ?: "Izem"),
                     "email" to (user.email ?: ""),
                     "lastActive" to Timestamp.now(),
-                    "isPremium" to false
+                    "isPremium" to false,
+                    "isBanned" to false
                 )
             }
 

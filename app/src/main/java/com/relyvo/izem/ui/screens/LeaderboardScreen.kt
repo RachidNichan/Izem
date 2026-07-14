@@ -1,5 +1,8 @@
 package com.relyvo.izem.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -13,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Flag // استيراد أيقونة العلم للتبليغ
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,6 +49,7 @@ fun LeaderboardScreen(
     val users by viewModel.leaderboardUsers.collectAsState()
     val currentUserId = viewModel.currentUserId
     val context = LocalContext.current
+    val isArabic = viewModel.isArabic.collectAsState().value
     val roarSuccessMessage = stringResource(R.string.leaderboard_roar_success)
     val roarErrorMessage = stringResource(R.string.leaderboard_roar_error)
     val roarWaitFormat = stringResource(R.string.leaderboard_roar_wait)
@@ -130,6 +135,9 @@ fun LeaderboardScreen(
                                         }
                                     }
                                 }
+                            },
+                            onReportClick = {
+                                reportUserByEmail(context, user, isArabic)
                             }
                         )
                     }
@@ -279,7 +287,8 @@ fun LeaderboardRow(
     rank: Int,
     user: UserProfile,
     isMe: Boolean,
-    onRoarClick: () -> Unit
+    onRoarClick: () -> Unit,
+    onReportClick: () -> Unit
 ) {
     val cardColor = if (isMe) IzemBlue.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
     val borderColor = if (isMe) IzemBlue else Color.Transparent
@@ -332,36 +341,72 @@ fun LeaderboardRow(
             Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (isMe) stringResource(R.string.profile_you) else user.displayName.ifEmpty { "Izem" },
+                        fontWeight = if (isMe) FontWeight.Bold else FontWeight.Medium,
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (!isMe) {
+                        IconButton(
+                            onClick = onReportClick,
+                            modifier = Modifier.size(24.dp).padding(start = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Flag,
+                                contentDescription = "Report Name",
+                                tint = Color.Gray.copy(alpha = 0.5f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
                 Text(
-                    text = if (isMe) stringResource(R.string.profile_you) else user.displayName.ifEmpty { "Izem" },
-                    fontWeight = if (isMe) FontWeight.Bold else FontWeight.Medium,
-                    fontSize = 14.sp
+                    text = getLocalizedLevel(user.currentLevel),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "${getLocalizedLevel(user.currentLevel)} • ${stringResource(R.string.profile_active_days, user.learningDays.toString())}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = stringResource(R.string.profile_active_days, user.learningDays.toString()),
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
 
             if (!isMe) {
-                IconButton(
+                Surface(
                     onClick = onRoarClick,
+                    shape = CircleShape,
+                    color = IzemGold.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, IzemGold.copy(alpha = 0.3f)),
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(36.dp)
-                        .background(IzemGold.copy(alpha = 0.15f), CircleShape)
+                        .padding(horizontal = 8.dp)
+                        .size(40.dp),
+                    tonalElevation = 2.dp
                 ) {
-                    Text(text = "🦁", fontSize = 18.sp)
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = "🦁",
+                            fontSize = 20.sp
+                        )
+                    }
                 }
             }
 
-            Text(
-                text = stringResource(R.string.profile_xp_suffix, user.totalXP.toString()),
-                fontWeight = FontWeight.Black,
-                fontSize = 14.sp,
-                color = IzemOrange
-            )
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.padding(start = 4.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.profile_xp_suffix, user.totalXP.toString()),
+                    fontWeight = FontWeight.Black,
+                    fontSize = 14.sp,
+                    color = IzemOrange
+                )
+            }
         }
     }
 }
@@ -412,5 +457,39 @@ fun StickyUserCard(
                 fontSize = 16.sp
             )
         }
+    }
+}
+
+fun reportUserByEmail(context: Context, user: UserProfile, isArabic: Boolean) {
+    val emailSubject = "Izem App: Report Inappropriate Username"
+    val emailBody = """
+        Hello Izem Team,
+        
+        I want to report an inappropriate/offensive username on the leaderboard.
+        
+        Offending User Details:
+        - Nickname: ${user.displayName}
+        - User UID: ${user.userId}
+        - Current Level: ${user.currentLevel}
+        
+        Please review and reset this user's name.
+        
+        Thank you.
+    """.trimIndent()
+
+    val uriString = "mailto:izem@relyvo.com" +
+            "?subject=${Uri.encode(emailSubject)}" +
+            "&body=${Uri.encode(emailBody)}"
+
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse(uriString)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        val errorMsg = if (isArabic) "تعذر فتح تطبيق البريد الإلكتروني" else "No email app installed."
+        Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
     }
 }

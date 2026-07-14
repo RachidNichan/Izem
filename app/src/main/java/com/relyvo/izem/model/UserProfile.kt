@@ -9,6 +9,8 @@ data class UserProfile(
     val avatarId: Int = 0,
     @get:PropertyName("isPremium")
     var isPremium: Boolean = false,
+    @get:PropertyName("isBanned")
+    val isBanned: Boolean = false,
     val totalXP: Int = 0,
     val currentLevel: String = "Izem Amezwaru",
     val lastActive: Timestamp? = null,

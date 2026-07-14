@@ -158,11 +158,24 @@ fun QuizScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = stringResource(R.string.quiz_question_count, (quizState.currentIndex + 1).toString()),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = onBackToMenu,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Exit Quiz",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.quiz_question_count, (quizState.currentIndex + 1).toString()),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                         Text(
                             text = stringResource(R.string.quiz_xp, (quizState.score * 10).toString()),
                             color = MaterialTheme.colorScheme.primary,
@@ -180,13 +193,61 @@ fun QuizScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+            },
+            bottomBar = {
+                val hasSelected = quizState.selectedAnswer.isNotEmpty()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp)
+                        .navigationBarsPadding()
+                ) {
+                    Button(
+                        onClick = {
+                            if (!quizState.isAnswerChecked) {
+                                viewModel.checkAnswer()
+                            } else {
+                                val isLastQuestion = quizState.currentIndex == totalQuestions - 1
+                                if (isLastQuestion) {
+                                    if (!userProfile.isPremium) {
+                                        InterstitialAdManager.showInterstitial(activity) {
+                                            viewModel.moveToNextQuestion()
+                                        }
+                                    } else {
+                                        viewModel.moveToNextQuestion()
+                                    }
+                                } else {
+                                    viewModel.moveToNextQuestion()
+                                }
+                            }
+                        },
+                        enabled = hasSelected,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (!quizState.isAnswerChecked) IzemBlue else IzemOrange
+                        )
+                    ) {
+                        Text(
+                            text = when {
+                                !quizState.isAnswerChecked -> if (isArabic) "تحقق" else "Check"
+                                quizState.currentIndex < totalQuestions - 1 -> if (isArabic) "التالي" else "Next"
+                                else -> if (isArabic) "إنهاء" else "Finish"
+                            },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
             }
         ) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(20.dp)
+                    .padding(horizontal = 20.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -252,50 +313,7 @@ fun QuizScreen(
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.height(30.dp))
-
-                val hasSelected = quizState.selectedAnswer.isNotEmpty()
-
-                Button(
-                    onClick = {
-                        if (!quizState.isAnswerChecked) {
-                            viewModel.checkAnswer()
-                        } else {
-                            val isLastQuestion = quizState.currentIndex == totalQuestions - 1
-                            if (isLastQuestion) {
-                                if (!userProfile.isPremium) {
-                                    InterstitialAdManager.showInterstitial(activity) {
-                                        viewModel.moveToNextQuestion()
-                                    }
-                                } else {
-                                    viewModel.moveToNextQuestion()
-                                }
-                            } else {
-                                viewModel.moveToNextQuestion()
-                            }
-                        }
-                    },
-                    enabled = hasSelected,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!quizState.isAnswerChecked) IzemBlue else IzemOrange
-                    )
-                ) {
-                    Text(
-                        text = when {
-                            !quizState.isAnswerChecked -> if (isArabic) "تحقق" else "Check"
-                            quizState.currentIndex < totalQuestions - 1 -> if (isArabic) "التالي" else "Next"
-                            else -> if (isArabic) "إنهاء" else "Finish"
-                        },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
-                    )
-                }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }

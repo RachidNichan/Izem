@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.delay
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -97,88 +99,130 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
         Screen.Profile
     )
 
+    if (userProfile.isBanned) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "🦁",
+                    fontSize = 80.sp,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+                Text(
+                    text = if (isArabic) "الحساب موقوف" else "Account Suspended",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = if (isArabic)
+                        "تم إيقاف هذا الحساب نهائياً بسبب انتهاك شروط الاستخدام وكتابة اسم غير لائق."
+                    else "This account has been permanently suspended for violating our terms of service.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
+        return
+    }
+
     Scaffold(
         bottomBar = {
-            Surface(
-                tonalElevation = 4.dp,
-                shadowElevation = 8.dp
-            ) {
-                NavigationBar(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
-                    tonalElevation = 0.dp
+            val navBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+
+            if (currentRoute != Screen.Quiz.route) {
+                Surface(
+                    tonalElevation = 4.dp,
+                    shadowElevation = 8.dp
                 ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                    val currentRoute = currentDestination?.route
+                    NavigationBar(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        tonalElevation = 0.dp
+                    ) {
+                        val currentDestination = navBackStackEntry?.destination
 
-                    bottomNavItems.forEach { screen ->
+                        bottomNavItems.forEach { screen ->
 
-                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
-                                (screen == Screen.Profile && currentRoute == Screen.Leaderboard.route) ||
-                                (screen == Screen.Categories && currentRoute?.startsWith("word_list") == true)
+                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true ||
+                                    (screen == Screen.Profile && currentRoute == Screen.Leaderboard.route) ||
+                                    (screen == Screen.Categories && currentRoute?.startsWith("word_list") == true)
 
-                        val activeColor = when (screen) {
-                            Screen.Categories -> IzemBlue
-                            Screen.Quiz -> IzemOrange
-                            Screen.Profile -> IzemGold
-                            Screen.Grammar -> if (androidx.compose.foundation.isSystemInDarkTheme()) IzemGreenDark else IzemGreen
-                            else -> MaterialTheme.colorScheme.primary
-                        }
+                            val activeColor = when (screen) {
+                                Screen.Categories -> IzemBlue
+                                Screen.Quiz -> IzemOrange
+                                Screen.Profile -> IzemGold
+                                Screen.Grammar -> if (androidx.compose.foundation.isSystemInDarkTheme()) IzemGreenDark else IzemGreen
+                                else -> MaterialTheme.colorScheme.primary
+                            }
 
-                        val indicatorColor = activeColor.copy(alpha = 0.15f)
+                            val indicatorColor = activeColor.copy(alpha = 0.15f)
 
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    imageVector = screen.icon!!,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            },
-                            label = {
-                                Text(
-                                    text = stringResource(id = screen.titleRes),
-                                    fontWeight = if (selected) FontWeight.Black else FontWeight.Medium,
-                                    fontSize = 12.sp
-                                )
-                            },
-                            selected = selected,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = activeColor,
-                                selectedTextColor = activeColor,
-                                indicatorColor = indicatorColor,
-                                unselectedIconColor = Color.Gray.copy(alpha = 0.6f),
-                                unselectedTextColor = Color.Gray.copy(alpha = 0.6f)
-                            ),
-                            onClick = {
-                                if (currentRoute == Screen.Leaderboard.route && screen == Screen.Profile) {
-                                    navController.popBackStack(Screen.Profile.route, inclusive = false)
-                                } else if (currentRoute?.startsWith("word_list") == true && screen == Screen.Categories) {
-                                    if (!userProfile.isPremium) {
-                                        InterstitialAdManager.showInterstitial(
-                                            activity,
-                                            InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
-                                        ) {
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = screen.icon!!,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(id = screen.titleRes),
+                                        fontWeight = if (selected) FontWeight.Black else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    )
+                                },
+                                selected = selected,
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = activeColor,
+                                    selectedTextColor = activeColor,
+                                    indicatorColor = indicatorColor,
+                                    unselectedIconColor = Color.Gray.copy(alpha = 0.6f),
+                                    unselectedTextColor = Color.Gray.copy(alpha = 0.6f)
+                                ),
+                                onClick = {
+                                    if (currentRoute == Screen.Leaderboard.route && screen == Screen.Profile) {
+                                        navController.popBackStack(Screen.Profile.route, inclusive = false)
+                                    } else if (currentRoute?.startsWith("word_list") == true && screen == Screen.Categories) {
+                                        if (!userProfile.isPremium) {
+                                            InterstitialAdManager.showInterstitial(
+                                                activity,
+                                                InterstitialAdManager.AD_UNIT_WORD_LIST_BACK
+                                            ) {
+                                                navController.popBackStack(Screen.Categories.route, inclusive = false)
+                                            }
+                                        } else {
                                             navController.popBackStack(Screen.Categories.route, inclusive = false)
                                         }
                                     } else {
-                                        navController.popBackStack(Screen.Categories.route, inclusive = false)
-                                    }
-                                } else {
-                                    val isLearnTab = screen == Screen.Categories
+                                        val isLearnTab = screen == Screen.Categories
 
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = !isLearnTab
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = !isLearnTab
+                                            }
+
+                                            launchSingleTop = true
+                                            restoreState = !isLearnTab
                                         }
-
-                                        launchSingleTop = true
-                                        restoreState = !isLearnTab
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
