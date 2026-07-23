@@ -1,4 +1,10 @@
 {
+  "name": "izem-scripts",
+  "private": true,
+  "scripts": {
+    "backup": "node scripts/backup.js",
+    "restore": "node scripts/restore.js"
+  },
   "dependencies": {
     "firebase-admin": "^14.1.0"
   }

@@ -3,7 +3,13 @@ const { getFirestore } = require('firebase-admin/firestore');
 const fs = require('fs');
 const path = require('path');
 
-const serviceAccount = require('./service-account.json');
+const serviceAccountPath = path.join(__dirname, '../service-account.json');
+if (!fs.existsSync(serviceAccountPath)) {
+  console.error('❌ Error: service-account.json not found in project root directory.');
+  process.exit(1);
+}
+
+const serviceAccount = require(serviceAccountPath);
 
 initializeApp({
   credential: cert(serviceAccount)
@@ -16,9 +22,9 @@ const collections = ['categories', 'words', 'phrases', 'verbs', 'users'];
 async function runBackup() {
   console.log('⏳ Starting Firestore backup...');
 
-  const backupDir = path.join(__dirname, 'firestore_backup');
+  const backupDir = path.join(__dirname, '../firestore_backup');
   if (!fs.existsSync(backupDir)){
-      fs.mkdirSync(backupDir);
+      fs.mkdirSync(backupDir, { recursive: true });
   }
 
   for (const col of collections) {

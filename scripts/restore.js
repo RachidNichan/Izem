@@ -3,7 +3,13 @@ const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 const fs = require('fs');
 const path = require('path');
 
-const serviceAccount = require('./service-account.json');
+const serviceAccountPath = path.join(__dirname, '../service-account.json');
+if (!fs.existsSync(serviceAccountPath)) {
+  console.error('❌ Error: service-account.json not found in project root directory.');
+  process.exit(1);
+}
+
+const serviceAccount = require(serviceAccountPath);
 
 initializeApp({
   credential: cert(serviceAccount)
@@ -31,7 +37,7 @@ function parseTimestamps(obj) {
 
 async function runRestore() {
   console.log('⏳ Starting Firestore database restore...');
-  const backupDir = path.join(__dirname, 'firestore_backup');
+  const backupDir = path.join(__dirname, '../firestore_backup');
 
   for (const col of collections) {
     try {
