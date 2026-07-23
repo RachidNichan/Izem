@@ -1,18 +1,56 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Built application files & release outputs
+*.apk
+*.aar
+*.ap_
+*.aab
+/app/release/
+/release/
+
+# Gradle & Build files
+.gradle/
+/build/
+/app/build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Local configuration files
 local.properties
-service-account.json
-firestore_backup
-node_modules
+*.iml
+
+# IDE files (Android Studio / IntelliJ)
+.idea/
+
+# Keystore & Signing files
+*.jks
+*.keystore
+*.p12
+*.pem
+*.pep
+*.p8
+*.key
+
+# Firebase & GCP Secret / Configuration files
+google-services.json
+**/google-services.json
+service-account*.json
+serviceAccountKey*.json
+*-adminsdk-*.json
+
+# Environment variables
+.env
+.env.*
+
+# Local backups & Dependencies
+firestore_backup/
+node_modules/
+functions/node_modules/
+
+# Logs
+*.log
+firebase-debug.log*
+ui-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
