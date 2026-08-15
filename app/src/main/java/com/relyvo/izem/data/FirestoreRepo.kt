@@ -92,7 +92,7 @@ class FirestoreRepo {
             .collection("quiz_history").add(quizData)
     }
 
-    fun updateUserProgress(userId: String, xpGained: Int, onNewTotalXp: (Int) -> Unit) {
+    fun updateUserProgress(userId: String, xpGained: Int, currentWeek: String, onNewTotalXp: (Int) -> Unit) {
         val userRef = db.collection("users").document(userId)
 
         db.runTransaction { transaction ->
@@ -102,10 +102,20 @@ class FirestoreRepo {
                 snapshot.getLong("totalXP")?.toInt() ?: 0
             } else { 0 }
 
+            val lastResetWeek = snapshot.getString("lastResetWeek") ?: ""
+            val currentWeeklyXP = snapshot.getLong("weeklyXP")?.toInt() ?: 0
+
             val newTotalXP = currentXP + xpGained
+            val newWeeklyXP = if (lastResetWeek == currentWeek) {
+                currentWeeklyXP + xpGained
+            } else {
+                xpGained
+            }
 
             val data = hashMapOf(
                 "totalXP" to newTotalXP,
+                "weeklyXP" to newWeeklyXP,
+                "lastResetWeek" to currentWeek,
                 "lastActive" to Timestamp.now()
             )
             transaction.set(userRef, data, SetOptions.merge())
@@ -301,11 +311,13 @@ class FirestoreRepo {
     }
 
     fun listenLeaderboard(
+        currentWeek: String,
         limit: Long = 20L,
         onResult: (List<UserProfile>) -> Unit
     ): ListenerRegistration {
         return db.collection("users")
-            .orderBy("totalXP", Query.Direction.DESCENDING)
+            .whereEqualTo("lastResetWeek", currentWeek)
+            .orderBy("weeklyXP", Query.Direction.DESCENDING)
             .limit(limit)
             .addSnapshotListener(executor) { snapshot, error ->
                 if (error != null) {

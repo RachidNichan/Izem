@@ -47,6 +47,7 @@ fun LeaderboardScreen(
     onBackClick: () -> Unit
 ) {
     val users by viewModel.leaderboardUsers.collectAsState()
+    val isLoading by viewModel.isLeaderboardLoading.collectAsState()
     val currentUserId = viewModel.currentUserId
     val context = LocalContext.current
     val isArabic = viewModel.isArabic.collectAsState().value
@@ -83,12 +84,32 @@ fun LeaderboardScreen(
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            if (users.isEmpty()) {
+            if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = IzemBlue)
+                }
+            } else if (users.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "🦁",
+                        fontSize = 64.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.leaderboard_empty_state),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             } else {
                 val top3 = users.take(3)
@@ -248,7 +269,7 @@ fun PodiumItem(
         )
 
         Text(
-            text = stringResource(R.string.profile_xp_suffix, user.totalXP.toString()),
+            text = stringResource(R.string.profile_xp_suffix, user.weeklyXP.toString()),
             fontSize = 11.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold
@@ -401,10 +422,15 @@ fun LeaderboardRow(
                 modifier = Modifier.padding(start = 4.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.profile_xp_suffix, user.totalXP.toString()),
+                    text = stringResource(R.string.profile_xp_suffix, user.weeklyXP.toString()),
                     fontWeight = FontWeight.Black,
                     fontSize = 14.sp,
                     color = IzemOrange
+                )
+                Text(
+                    text = stringResource(R.string.leaderboard_weekly_xp),
+                    fontSize = 9.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
             }
         }
@@ -452,7 +478,7 @@ fun StickyUserCard(
             }
 
             Text(
-                text = stringResource(R.string.profile_xp_suffix, user.totalXP.toString()),
+                text = stringResource(R.string.profile_xp_suffix, user.weeklyXP.toString()),
                 fontWeight = FontWeight.Black,
                 fontSize = 16.sp
             )

@@ -22,6 +22,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -76,6 +79,9 @@ class AppViewModel @Inject constructor(
     private val _leaderboardUsers = MutableStateFlow<List<UserProfile>>(emptyList())
     val leaderboardUsers: StateFlow<List<UserProfile>> = _leaderboardUsers.asStateFlow()
 
+    private val _isLeaderboardLoading = MutableStateFlow(true)
+    val isLeaderboardLoading = _isLeaderboardLoading.asStateFlow()
+
     private var leaderboardListener: ListenerRegistration? = null
 
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
@@ -109,9 +115,12 @@ class AppViewModel @Inject constructor(
 
     private fun listenToLeaderboard() {
         leaderboardListener?.remove()
+        _isLeaderboardLoading.value = true
 
-        leaderboardListener = repo.listenLeaderboard(limit = 20) { users ->
+        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.US).format(Date())
+        leaderboardListener = repo.listenLeaderboard(currentWeek = currentWeek, limit = 20) { users ->
             _leaderboardUsers.value = users
+            _isLeaderboardLoading.value = false
         }
     }
 
@@ -403,11 +412,12 @@ class AppViewModel @Inject constructor(
         val userId = currentUserId ?: return
 
         val xpGained = score * 10
+        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.US).format(Date())
 
         repo.saveQuizResult(userId, score, totalQuestions)
 
         if (xpGained > 0) {
-            repo.updateUserProgress(userId, xpGained) { newTotalXp ->
+            repo.updateUserProgress(userId, xpGained, currentWeek) { newTotalXp ->
                 val newLevel = when {
                     newTotalXp >= 5000 -> "level_4" // Agellid n Izmawn
                     newTotalXp >= 1500 -> "level_3" // Izem Amqran

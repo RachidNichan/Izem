@@ -12,6 +12,8 @@ data class UserProfile(
     @get:PropertyName("isBanned")
     val isBanned: Boolean = false,
     val totalXP: Int = 0,
+    val weeklyXP: Int = 0,
+    val lastResetWeek: String = "",
     val currentLevel: String = "Izem Amezwaru",
     val lastActive: Timestamp? = null,
     val learnedWords: List<String> = emptyList(),
