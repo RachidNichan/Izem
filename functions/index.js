@@ -3,6 +3,24 @@ const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+async function sendBatchNotifications(tokens, messagePayload) {
+    if (!tokens || tokens.length === 0) return;
+
+    const BATCH_SIZE = 500;
+    const promises = [];
+
+    for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+        const chunk = tokens.slice(i, i + BATCH_SIZE);
+        const payload = {
+            ...messagePayload,
+            tokens: chunk
+        };
+        promises.push(admin.messaging().sendEachForMulticast(payload));
+    }
+
+    await Promise.all(promises);
+}
+
 exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}", async (event) => {
     const snapshot = event.data;
     if (!snapshot) return null;
@@ -16,7 +34,6 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
 
     try {
         // 1. Spam Check: Only allow one notification per hour between the same two users
-
         const oneHourAgo = Date.now() - (60 * 60 * 1000);
         const interactionsSnapshot = await admin.firestore()
             .collection("interactions")
@@ -99,7 +116,6 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
     schedule: "0 21 * * 0",
     timeZone: "Africa/Casablanca",
 }, async (event) => {
-    // Replicate Java's SimpleDateFormat("yyyy-'W'ww", Locale.US) logic
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const startDay = startOfYear.getDay(); // 0 = Sunday
@@ -130,7 +146,7 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
 
         // Compose clean bilingual message
         let bodyEn = "Weekly winners:\n";
-        let bodyAr = "\nأبطال الأسبوع:\n";
+        let bodyAr = "أبطال الأسبوع:\n";
 
         winners.forEach((w, i) => {
             const rank = i + 1;
@@ -138,27 +154,69 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
             bodyAr += `${rank}. ${w.name} (${w.xp} نقطة)\n`;
         });
 
-        const message = {
-            topic: "all_users",
-            notification: {
-                title: "🏆 Izem Weekly Champions / أبطال الأسبوع في إيزم",
-                body: (bodyEn.trim() + "\n" + bodyAr.trim()).trim()
-            },
-            android: {
-                priority: "high",
-                notification: {
-                    channelId: "izem_notifications",
-                    clickAction: "LEADERBOARD_ACTION"
-                }
-            },
-            data: {
-                type: "announcement",
-                navigate_to: "leaderboard"
-            }
-        };
+        const allUsersSnapshot = await admin.firestore().collection("users").get();
+        const arTokens = [];
+        const enTokens = [];
 
-        await admin.messaging().send(message);
-        console.log(`Weekly announcement sent for week ${currentWeek}`);
+        allUsersSnapshot.forEach(doc => {
+            const uData = doc.data();
+            if (uData.fcmToken) {
+                if (uData.language === "ar") {
+                    arTokens.push(uData.fcmToken);
+                } else {
+                    enTokens.push(uData.fcmToken);
+                }
+            }
+        });
+
+        if (arTokens.length > 0) {
+            const arPayload = {
+                topic: "all_users",
+                notification: {
+                    title: "🏆 أبطال الأسبوع في إيزم",
+                    body: bodyAr.trim()
+                },
+                android: {
+                    priority: "high",
+                    notification: {
+                        channelId: "izem_notifications",
+                        clickAction: "LEADERBOARD_ACTION"
+                    }
+                },
+                data: {
+                    type: "announcement",
+                    navigate_to: "leaderboard",
+                    click_action: "LEADERBOARD_ACTION"
+                }
+            };
+            await sendBatchNotifications(arTokens, arPayload);
+            console.log(`Weekly Arabic announcement sent to ${arTokens.length} users.`);
+        }
+
+        if (enTokens.length > 0) {
+            const enPayload = {
+                topic: "all_users",
+                notification: {
+                    title: "🏆 Izem Weekly Champions",
+                    body: bodyEn.trim()
+                },
+                android: {
+                    priority: "high",
+                    notification: {
+                        channelId: "izem_notifications",
+                        clickAction: "LEADERBOARD_ACTION"
+                    }
+                },
+                data: {
+                    type: "announcement",
+                    navigate_to: "leaderboard",
+                    click_action: "LEADERBOARD_ACTION"
+                }
+            };
+            await sendBatchNotifications(enTokens, enPayload);
+            console.log(`Weekly English announcement sent to ${enTokens.length} users.`);
+        }
+
     } catch (error) {
         console.error("Error in weeklyLeaderboardAnnouncement:", error);
     }

@@ -125,7 +125,11 @@ fun LeaderboardScreen(
                 ) {
                     item {
                         if (top3.isNotEmpty()) {
-                            PodiumSection(top3 = top3)
+                            PodiumSection(
+                                top3 = top3,
+                                currentUserId = currentUserId,
+                                onReportClick = { user -> reportUserByEmail(context, user, isArabic) }
+                            )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
@@ -183,7 +187,11 @@ fun LeaderboardScreen(
 }
 
 @Composable
-fun PodiumSection(top3: List<UserProfile>) {
+fun PodiumSection(
+    top3: List<UserProfile>,
+    currentUserId: String?,
+    onReportClick: (UserProfile) -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -196,7 +204,9 @@ fun PodiumSection(top3: List<UserProfile>) {
                 user = top3[1],
                 rank = 2,
                 color = Color(0xFFC0C0C0), // Silver
-                height = 110.dp
+                height = 110.dp,
+                isMe = top3[1].userId == currentUserId,
+                onReportClick = { onReportClick(top3[1]) }
             )
         }
 
@@ -205,7 +215,9 @@ fun PodiumSection(top3: List<UserProfile>) {
                 user = top3[0],
                 rank = 1,
                 color = IzemGold, // Gold
-                height = 140.dp
+                height = 140.dp,
+                isMe = top3[0].userId == currentUserId,
+                onReportClick = { onReportClick(top3[0]) }
             )
         }
 
@@ -214,7 +226,9 @@ fun PodiumSection(top3: List<UserProfile>) {
                 user = top3[2],
                 rank = 3,
                 color = Color(0xFFCD7F32), // Bronze
-                height = 95.dp
+                height = 95.dp,
+                isMe = top3[2].userId == currentUserId,
+                onReportClick = { onReportClick(top3[2]) }
             )
         }
     }
@@ -225,7 +239,9 @@ fun PodiumItem(
     user: UserProfile,
     rank: Int,
     color: Color,
-    height: androidx.compose.ui.unit.Dp
+    height: androidx.compose.ui.unit.Dp,
+    isMe: Boolean,
+    onReportClick: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -258,15 +274,34 @@ fun PodiumItem(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        Text(
-            text = user.displayName.ifEmpty { "Izem" },
-            fontWeight = FontWeight.Bold,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Text(
+                text = if (isMe) stringResource(R.string.profile_you) else user.displayName.ifEmpty { "Izem" },
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = if (isMe) Modifier.fillMaxWidth() else Modifier.weight(1f, fill = false)
+            )
+            if (!isMe) {
+                IconButton(
+                    onClick = onReportClick,
+                    modifier = Modifier.size(18.dp).padding(start = 2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = "Report Name",
+                        tint = Color.Gray.copy(alpha = 0.5f),
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
+        }
 
         Text(
             text = stringResource(R.string.profile_xp_suffix, user.weeklyXP.toString()),

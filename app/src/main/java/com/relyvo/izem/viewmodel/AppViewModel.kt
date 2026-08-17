@@ -117,7 +117,7 @@ class AppViewModel @Inject constructor(
         leaderboardListener?.remove()
         _isLeaderboardLoading.value = true
 
-        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.US).format(Date())
+        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.UK).format(Date())
         leaderboardListener = repo.listenLeaderboard(currentWeek = currentWeek, limit = 20) { users ->
             _leaderboardUsers.value = users
             _isLeaderboardLoading.value = false
@@ -412,7 +412,7 @@ class AppViewModel @Inject constructor(
         val userId = currentUserId ?: return
 
         val xpGained = score * 10
-        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.US).format(Date())
+        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.UK).format(Date())
 
         repo.saveQuizResult(userId, score, totalQuestions)
 
