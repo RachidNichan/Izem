@@ -109,6 +109,40 @@ exports.onInteractionCreated = onDocumentCreated("interactions/{interactionId}",
 });
 
 /**
+ * Replicates Java's SimpleDateFormat("yyyy-'W'ww", Locale.UK) in the Africa/Casablanca time zone.
+ * Matches Android's weekly reset cycle (Monday to Sunday).
+ */
+function getCurrentWeek(date = new Date()) {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Africa/Casablanca",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric"
+    });
+    const parts = formatter.formatToParts(date);
+    let year, month, day;
+    for (const p of parts) {
+        if (p.type === "year") year = parseInt(p.value, 10);
+        if (p.type === "month") month = parseInt(p.value, 10) - 1;
+        if (p.type === "day") day = parseInt(p.value, 10);
+    }
+
+    const d = new Date(Date.UTC(year, month, day));
+    const dow = d.getUTCDay() === 0 ? 7 : d.getUTCDay(); // Mon=1..Sun=7
+
+    // Find Thursday of the current week (ISO-8601 standard used by Locale.UK)
+    const thursday = new Date(Date.UTC(year, d.getUTCMonth(), d.getUTCDate() - dow + 4));
+
+    // Week 1 is the week containing the first Thursday of the year (contains Jan 4)
+    const jan4 = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 4));
+    const jan4Dow = jan4.getUTCDay() === 0 ? 7 : jan4.getUTCDay();
+    const firstThursday = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 4 - jan4Dow + 4));
+
+    const weekNum = 1 + Math.round((thursday - firstThursday) / (7 * 86400000));
+    return `${year}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+/**
  * Scheduled function to announce weekly leaderboard winners.
  * Runs every Sunday at 9:00 PM Africa/Casablanca.
  */
@@ -116,12 +150,7 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
     schedule: "0 21 * * 0",
     timeZone: "Africa/Casablanca",
 }, async (event) => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const startDay = startOfYear.getDay(); // 0 = Sunday
-    const pastDaysOfYear = (now - startOfYear) / 86400000;
-    const weekNumber = Math.ceil((pastDaysOfYear + startDay + 1) / 7);
-    const currentWeek = `${now.getFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+    const currentWeek = getCurrentWeek();
 
     try {
         const snapshot = await admin.firestore()
@@ -171,7 +200,6 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
 
         if (arTokens.length > 0) {
             const arPayload = {
-                topic: "all_users",
                 notification: {
                     title: "🏆 أبطال الأسبوع في إيزم",
                     body: bodyAr.trim()
@@ -195,7 +223,6 @@ exports.weeklyLeaderboardAnnouncement = onSchedule({
 
         if (enTokens.length > 0) {
             const enPayload = {
-                topic: "all_users",
                 notification: {
                     title: "🏆 Izem Weekly Champions",
                     body: bodyEn.trim()
