@@ -31,6 +31,7 @@ class IzemApp : Application() {
         MobileAds.initialize(this) {
             InterstitialAdManager.loadInterstitial(this, InterstitialAdManager.AD_UNIT_QUIZ)
             InterstitialAdManager.loadInterstitial(this, InterstitialAdManager.AD_UNIT_WORD_LIST_BACK)
+            InterstitialAdManager.loadInterstitial(this, InterstitialAdManager.AD_UNIT_LESSON_END)
         }
 
         createNotificationChannel()

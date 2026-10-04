@@ -15,8 +15,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Campaign
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Flag // استيراد أيقونة العلم للتبليغ
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -99,9 +101,11 @@ fun LeaderboardScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "🦁",
-                        fontSize = 64.sp
+                    Icon(
+                        imageVector = Icons.Default.Leaderboard,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
@@ -444,9 +448,11 @@ fun LeaderboardRow(
                     tonalElevation = 2.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "🦁",
-                            fontSize = 20.sp
+                        Icon(
+                            imageVector = Icons.Default.Campaign,
+                            contentDescription = "Challenge",
+                            tint = IzemGold,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

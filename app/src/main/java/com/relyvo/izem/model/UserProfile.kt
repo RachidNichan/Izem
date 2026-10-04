@@ -1,8 +1,10 @@
 package com.relyvo.izem.model
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.PropertyName
 
+@IgnoreExtraProperties
 data class UserProfile(
     val userId: String = "",
     val displayName: String = "Izem",
@@ -18,5 +20,6 @@ data class UserProfile(
     val lastActive: Timestamp? = null,
     val learnedWords: List<String> = emptyList(),
     val learningDays: Int = 0,
-    val lastDateActive: String = ""
+    val lastDateActive: String = "",
+    val completedLessons: Map<String, Int> = emptyMap()
 )

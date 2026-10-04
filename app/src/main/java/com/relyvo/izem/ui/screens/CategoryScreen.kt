@@ -3,32 +3,39 @@ package com.relyvo.izem.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -47,19 +54,32 @@ fun CategoryScreen(
 ) {
     val context = LocalContext.current
     val isDark = isSystemInDarkTheme()
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredCategories = remember(categoriesList, searchQuery) {
+        if (searchQuery.isBlank()) {
+            categoriesList
+        } else {
+            categoriesList.filter {
+                it.titleEn.contains(searchQuery, ignoreCase = true) ||
+                        it.titleAr.contains(searchQuery, ignoreCase = true) ||
+                        it.id.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
 
     val backgroundBrush = if (isDark) {
         Brush.verticalGradient(
             colors = listOf(
-                Color(0xFF121212),
-                Color(0xFF1E1E1E)
+                Color(0xFF12141A),
+                Color(0xFF1A1D26)
             )
         )
     } else {
         Brush.verticalGradient(
             colors = listOf(
-                LearnContainer,
-                Color.White
+                Color(0xFFF7F9FC),
+                Color(0xFFEEF2F6)
             )
         )
     }
@@ -79,149 +99,316 @@ fun CategoryScreen(
                 .padding(paddingValues)
                 .background(brush = backgroundBrush)
         ) {
-            // Decorative elements: Trees/Plants
-            Icon(
-                imageVector = Icons.Default.Nature,
-                contentDescription = null,
-                tint = if (isDark) Color.White.copy(alpha = 0.05f) else IzemBlue.copy(alpha = 0.05f),
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .size(120.dp)
-                    .offset(x = (-20).dp, y = 20.dp)
-            )
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 32.dp, bottom = 100.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxSize()
             ) {
-                itemsIndexed(categoriesList) { index, category ->
-                    val offset = when (index % 4) {
-                        0 -> 0.dp
-                        1 -> 40.dp
-                        2 -> 0.dp
-                        3 -> (-40).dp
-                        else -> 0.dp
-                    }
-
-                    Box(
+                // 1. Search Bar (Full Width Span)
+                item(span = { GridItemSpan(2) }) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = {
+                            Text(
+                                text = if (isArabic) "ابحث في الأقسام..." else "Search categories...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                tint = if (isDark) Color.LightGray else IzemBlue
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Clear",
+                                        tint = Color.Gray
+                                    )
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = IzemBlue,
+                            unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.08f),
+                            focusedContainerColor = if (isDark) Color(0xFF1E212B) else Color.White,
+                            unfocusedContainerColor = if (isDark) Color(0xFF1E212B) else Color.White
+                        ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp),
-                        contentAlignment = Alignment.Center
+                            .padding(vertical = 4.dp)
+                    )
+                }
+
+                // 2. Dictionary Mascot Welcome Card (Full Width Span)
+                item(span = { GridItemSpan(2) }) {
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDark) Color(0xFF1F2533) else Color(0xFFE8F1FC)
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isDark) Color.White.copy(alpha = 0.08f) else Color(0xFFD0E2FB)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        CategoryPathItem(
-                            category = category,
-                            isArabic = isArabic,
-                            modifier = Modifier.offset(x = offset),
-                            onClick = { onCategoryClick(category.id) }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = if (isDark) Color(0xFF2B3347) else Color.White,
+                                modifier = Modifier.size(52.dp),
+                                shadowElevation = 2.dp
+                            ) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.izem_mascot),
+                                    contentDescription = "Izem Mascot",
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.padding(6.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = if (isArabic) "قاموس تمازيغت المصوّر" else "Tamazight Illustrated Dictionary",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = if (isDark) Color.White else Color(0xFF0D47A1)
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = if (isArabic) "تصفح المفردات واستمع للنطق الأصلي في أي وقت." else "Browse vocabulary and listen to native audio pronunciations.",
+                                    fontSize = 12.sp,
+                                    color = if (isDark) Color.LightGray else Color(0xFF283593),
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 3. Category Grid Cards
+                items(
+                    items = filteredCategories,
+                    key = { it.id }
+                ) { category ->
+                    CategoryGridCard(
+                        category = category,
+                        isArabic = isArabic,
+                        onClick = { onCategoryClick(category.id) }
+                    )
+                }
+
+                // 4. Empty State if search finds nothing
+                if (filteredCategories.isEmpty()) {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = null,
+                                    tint = Color.Gray,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = if (isArabic) "لم يتم العثور على أقسام مطابقة" else "No matching categories found",
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray,
+                                    fontSize = 15.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryGridCard(
+    category: Category,
+    isArabic: Boolean,
+    onClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val isDark = isSystemInDarkTheme()
+
+    val accentColor = remember(category.id) {
+        getCategoryAccentColor(category.id)
+    }
+
+    val fallbackIcon = remember(category.id) {
+        getCategoryFallbackIcon(category.id)
+    }
+
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDark) Color(0xFF1E222D) else Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(
+            1.dp,
+            if (isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.06f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Icon Container
+            Surface(
+                shape = CircleShape,
+                color = accentColor.copy(alpha = if (isDark) 0.18f else 0.12f),
+                modifier = Modifier.size(62.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (category.iconUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(category.iconUrl)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
+                            error = rememberVectorPainter(fallbackIcon),
+                            modifier = Modifier.size(38.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Icon(
+                            imageVector = fallbackIcon,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(30.dp)
                         )
                     }
                 }
             }
 
-            // Mascot area at bottom
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .navigationBarsPadding()
-                    .padding(16.dp)
+            // Titles
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                MascotSpeechBubble()
-            }
-        }
-    }
-}
+                val primaryTitle = if (isArabic) category.titleAr.ifEmpty { category.titleEn } else category.titleEn.ifEmpty { category.titleAr }
+                val secondaryTitle = if (isArabic) category.titleEn else category.titleAr
 
-@Composable
-fun MascotSpeechBubble() {
-    val isDark = isSystemInDarkTheme()
-    Row(verticalAlignment = Alignment.Bottom) {
-        Surface(
-            shape = CircleShape,
-            color = if (isDark) Color(0xFF333333) else Color.White,
-            modifier = Modifier.size(80.dp),
-            shadowElevation = 4.dp
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.izem_mascot),
-                contentDescription = "Izem Mascot",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
-
-        Surface(
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomEnd = 16.dp),
-            color = if (isDark) Color(0xFF444444) else Color.White,
-            modifier = Modifier
-                .padding(start = 4.dp, bottom = 40.dp),
-            shadowElevation = 4.dp
-        ) {
-            Text(
-                text = stringResource(R.string.mascot_greeting),
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                style = MaterialTheme.typography.bodySmall,
-                fontWeight = FontWeight.Bold,
-                color = if (isDark) Color.White else Color.Black
-            )
-        }
-    }
-}
-
-@Composable
-fun CategoryPathItem(
-    category: Category,
-    isArabic: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val context = LocalContext.current
-    val isDark = isSystemInDarkTheme()
-    val errorPainter = rememberVectorPainter(image = Icons.AutoMirrored.Filled.List)
-
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Surface(
-            modifier = Modifier
-                .size(80.dp)
-                .clickable { onClick() },
-            shape = CircleShape,
-            color = if (isDark) Color(0xFF2C2C2C) else Color.White,
-            shadowElevation = 6.dp,
-            border = BorderStroke(3.dp, if (isDark) IzemBlue.copy(alpha = 0.5f) else Color(0xFFE0E0E0))
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(category.iconUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    error = errorPainter,
-                    modifier = Modifier.size(44.dp),
-                    contentScale = ContentScale.Fit
+                Text(
+                    text = primaryTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDark) Color.White else Color(0xFF1A2138),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
                 )
+
+                if (secondaryTitle.isNotBlank() && secondaryTitle != primaryTitle) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = secondaryTitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            // Bottom action pill
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = accentColor.copy(alpha = if (isDark) 0.15f else 0.10f),
+                modifier = Modifier.height(26.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                        contentDescription = null,
+                        modifier = Modifier.size(12.dp),
+                        tint = accentColor
+                    )
+                    Text(
+                        text = if (isArabic) "تصفح" else "Explore",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = accentColor
+                    )
+                }
             }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(8.dp))
+private fun getCategoryAccentColor(categoryId: String): Color {
+    return when (categoryId.lowercase()) {
+        "alphabet" -> Color(0xFF1E88E5) // Blue
+        "animals" -> Color(0xFF8D6E63)  // Brown
+        "clothes" -> Color(0xFF546E7A)  // Slate
+        "colors" -> Color(0xFF8E24AA)   // Purple
+        "family" -> Color(0xFFD81B60)   // Rose Pink
+        "food" -> Color(0xFFF4511E)     // Warm Orange
+        "greetings" -> Color(0xFF2E7D32) // Forest Green
+        "months" -> Color(0xFF5E35B1)   // Violet
+        "nature" -> Color(0xFF00897B)   // Teal / Cyan
+        "numbers" -> Color(0xFFFB8C00)  // Amber
+        "pronouns" -> Color(0xFF00ACC1) // Aqua Cyan
+        "week" -> Color(0xFF039BE5)     // Sky Blue
+        else -> IzemBlue
+    }
+}
 
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = if (isDark) IzemBlue.copy(alpha = 0.8f) else IzemBlue,
-            shadowElevation = 2.dp
-        ) {
-            Text(
-                text = if (isArabic) category.titleAr else category.titleEn,
-                color = Color.White,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold
-            )
-        }
+private fun getCategoryFallbackIcon(categoryId: String): ImageVector {
+    return when (categoryId.lowercase()) {
+        "alphabet" -> Icons.Default.Translate
+        "animals" -> Icons.Default.Pets
+        "clothes" -> Icons.Default.Checkroom
+        "colors" -> Icons.Default.Palette
+        "family" -> Icons.Default.People
+        "food" -> Icons.Default.Restaurant
+        "greetings" -> Icons.Default.WavingHand
+        "months" -> Icons.Default.CalendarMonth
+        "nature" -> Icons.Default.Terrain
+        "numbers" -> Icons.Default.Pin
+        "pronouns" -> Icons.Default.RecordVoiceOver
+        "week" -> Icons.Default.DateRange
+        else -> Icons.Default.Category
     }
 }
 
@@ -232,7 +419,7 @@ fun CategoryHeader(
     onShareClick: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val contentColor = if (isDark) Color.White else Color(0xFF1A237E) // Deep Blue
+    val contentColor = if (isDark) Color.White else Color(0xFF1A237E)
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -241,7 +428,7 @@ fun CategoryHeader(
         Row(
             modifier = Modifier
                 .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -307,20 +494,19 @@ fun CategoryHeader(
 fun shareApp(context: Context) {
     val appPackageName = context.packageName
     val message = context.getString(R.string.share_message, appPackageName)
-    
+
     val sendIntent = Intent(Intent.ACTION_SEND).apply {
         putExtra(Intent.EXTRA_TEXT, message)
         type = "text/plain"
     }
-    
+
     val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_chooser_title)).apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    
+
     try {
         context.startActivity(shareIntent)
-    } catch (e: Exception) {
-        // Fallback for sharing if chooser fails
+    } catch (_: Exception) {
     }
 }
 
@@ -331,7 +517,6 @@ fun sendFeedback(context: Context) {
     }
     try {
         context.startActivity(intent)
-    } catch (e: Exception) {
-        // Handle case where no email app is installed
+    } catch (_: Exception) {
     }
 }

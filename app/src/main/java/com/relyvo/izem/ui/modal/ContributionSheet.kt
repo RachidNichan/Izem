@@ -23,6 +23,10 @@ import androidx.compose.ui.text.style.TextAlign
 import com.relyvo.izem.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Mic
 import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.Word
 import com.relyvo.izem.viewmodel.AppViewModel
@@ -124,10 +128,20 @@ fun ContributionSheet(
                 )
             ) {
                 val imageLabel = stringResource(R.string.contribution_photo)
-                Text(
-                    text = if(imageUri != null) "✅ $imageLabel" else "📷 $imageLabel",
-                    fontSize = 14.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (imageUri != null) Icons.Default.Check else Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = imageLabel,
+                        fontSize = 14.sp
+                    )
+                }
             }
 
             Button(
@@ -139,10 +153,20 @@ fun ContributionSheet(
                 )
             ) {
                 val audioLabel = stringResource(R.string.contribution_voice)
-                Text(
-                    text = if(audioUri != null) "✅ $audioLabel" else "🎤 $audioLabel",
-                    fontSize = 14.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        imageVector = if (audioUri != null) Icons.Default.Check else Icons.Default.Mic,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = audioLabel,
+                        fontSize = 14.sp
+                    )
+                }
             }
 
         }

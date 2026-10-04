@@ -5,11 +5,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.relyvo.izem.R
 
 sealed class Screen(val route: String, @StringRes val titleRes: Int, val icon: ImageVector?) {
+
+    object Path : Screen("learning_path", R.string.nav_path, Icons.Filled.School)
 
     object Categories : Screen("categories", R.string.nav_learn, Icons.Filled.Home)
 

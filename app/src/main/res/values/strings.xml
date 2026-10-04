@@ -2,15 +2,16 @@
     <string name="app_name">Izem</string>
 
     <!-- Navigation -->
-    <string name="nav_learn">Learn</string>
+    <string name="nav_path">Journey</string>
+    <string name="nav_learn">Dictionary</string>
     <string name="nav_words">Words</string>
     <string name="nav_quiz">Quiz</string>
     <string name="nav_grammar">Grammar</string>
     <string name="nav_profile">Profile</string>
     <string name="nav_leaderboard">Leaderboard</string>
-    <string name="leaderboard_empty_state">A new week has started! 🦁\nBe the first to join the leaderboard by completing a quiz.</string>
+    <string name="leaderboard_empty_state">A new week has started!\nBe the first to join the leaderboard by completing a quiz.</string>
     <string name="leaderboard_weekly_xp">Weekly XP</string>
-    <string name="leaderboard_roar_success">Challenge Roar sent successfully! 🦁</string>
+    <string name="leaderboard_roar_success">Challenge sent successfully!</string>
     <string name="leaderboard_roar_wait">You roared at this lion recently! Wait %1$d minutes to challenge again.</string>
     <string name="leaderboard_roar_error">Error: Could not send roar. Check your connection.</string>
 
@@ -18,19 +19,19 @@
     <string name="quiz_question_count">Question %1$s</string>
     <string name="quiz_xp">XP: %1$s</string>
     <string name="quiz_how_to_say">How do you say:</string>
-    <string name="quiz_next">Next Question ➡</string>
-    <string name="quiz_finish">Finish 🏁</string>
-    <string name="quiz_well_done">Well Done! 🦁</string>
+    <string name="quiz_next">Next Question</string>
+    <string name="quiz_finish">Finish</string>
+    <string name="quiz_well_done">Well Done!</string>
     <string name="quiz_total_xp">Total XP Gained</string>
     <string name="quiz_share_result">Share Result</string>
     <string name="quiz_play_again">Play Again</string>
     <string name="quiz_exit">Exit</string>
-    <string name="quiz_share_message">I just scored %1$s XP in Izem App! 🦁\n%2$s</string>
+    <string name="quiz_share_message">I just scored %1$s XP in Izem App!\n%2$s</string>
 
     <!-- Auth & Profile -->
-    <string name="auth_welcome_back">Welcome back! 🦁</string>
-    <string name="auth_progress_saved">Progress saved successfully! 🎉</string>
-    <string name="auth_account_linked">Account linked successfully! 🎉</string>
+    <string name="auth_welcome_back">Welcome back!</string>
+    <string name="auth_progress_saved">Progress saved successfully!</string>
+    <string name="auth_account_linked">Account linked successfully!</string>
     <string name="profile_current_rank">YOUR CURRENT RANK</string>
     <string name="profile_total_xp">Total Experience</string>
     <string name="profile_words_found">Words Found</string>
@@ -76,16 +77,16 @@
     <string name="grammar_no_conjugation">Conjugation not added yet</string>
 
     <!-- Contribution -->
-    <string name="contribution_correct_word">Correct Word ✏️</string>
-    <string name="contribution_add_word">Add New Word 🦁</string>
+    <string name="contribution_correct_word">Correct Word</string>
+    <string name="contribution_add_word">Add New Word</string>
     <string name="contribution_tifinagh">Tifinagh Script</string>
     <string name="contribution_tamazight">Tamazight (Latin)</string>
     <string name="contribution_arabic_trans">Arabic Translation</string>
     <string name="contribution_english_trans">English Translation</string>
     <string name="contribution_photo">Photo</string>
     <string name="contribution_voice">Voice</string>
-    <string name="contribution_audio_required">⚠️ Please add an audio recording</string>
-    <string name="contribution_success">Thank you! Your suggestion is under review. 🦁</string>
+    <string name="contribution_audio_required">Please add an audio recording</string>
+    <string name="contribution_success">Thank you! Your suggestion is under review.</string>
     <string name="contribution_submit">Submit for Review</string>
 
     <!-- Category Screen -->

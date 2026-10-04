@@ -18,7 +18,7 @@ class ReminderWorker(context: Context, params: WorkerParameters) : CoroutineWork
         val settingsRepo = SettingsRepo(applicationContext)
         val isArabic = settingsRepo.isArabic.first()
 
-        val title = if (isArabic) "الأسد في انتظارك! 🦁" else "The Lion is Waiting! 🦁"
+        val title = if (isArabic) "الأسد في انتظارك!" else "The Lion is Waiting!"
         val message = if (isArabic)
             "مرت 24 ساعة. هل أنت مستعد لتعلم كلمات تمازيغت جديدة اليوم؟"
         else "It's been 24 hours. Ready to learn new Tamazight words today?"

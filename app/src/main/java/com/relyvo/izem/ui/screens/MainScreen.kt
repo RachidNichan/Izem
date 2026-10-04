@@ -5,6 +5,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -34,6 +36,9 @@ import com.relyvo.izem.ui.theme.IzemGreen
 import com.relyvo.izem.ui.theme.IzemGreenDark
 import com.relyvo.izem.ui.theme.IzemOrange
 import com.relyvo.izem.viewmodel.AppViewModel
+import com.relyvo.izem.model.curriculum.Lesson
+import com.relyvo.izem.ui.screens.LearningPathScreen
+import com.relyvo.izem.ui.screens.LessonRunnerScreen
 
 import com.relyvo.izem.LocalActivity
 
@@ -48,13 +53,18 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
         if (intent?.getStringExtra("type") == "roar" || intent?.getStringExtra("navigate_to") == "leaderboard") {
             Screen.Leaderboard.route
         } else {
-            Screen.Categories.route
+            Screen.Path.route
         }
     }
+
+    var runningLesson by remember { mutableStateOf<Lesson?>(null) }
 
     val navController = rememberNavController()
     val categories by viewModel.categories.collectAsState()
     val currentWords by viewModel.currentWords.collectAsState()
+    val allWords by viewModel.allWords.collectAsState()
+    val phrases by viewModel.phrases.collectAsState()
+    val completedLessons by viewModel.completedLessons.collectAsState()
     val isArabic by viewModel.isArabic.collectAsState()
     val userProfile by viewModel.userProfile.collectAsState()
 
@@ -93,11 +103,45 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
     }
 
     val bottomNavItems = listOf(
+        Screen.Path,
         Screen.Categories,
         Screen.Quiz,
         Screen.Grammar,
         Screen.Profile
     )
+
+    if (runningLesson != null) {
+        LessonRunnerScreen(
+            lesson = runningLesson!!,
+            isArabic = isArabic,
+            onFinish = { xpGained, stars ->
+                val lessonToComplete = runningLesson
+                val lessonId = lessonToComplete?.id ?: return@LessonRunnerScreen
+                val completeLessonAction = {
+                    viewModel.onLessonCompleted(
+                        lessonId = lessonId,
+                        starsEarned = stars,
+                        xpGained = xpGained
+                    )
+                    runningLesson = null
+                }
+
+                if (!userProfile.isPremium) {
+                    InterstitialAdManager.showInterstitial(
+                        activity = activity,
+                        adUnitId = InterstitialAdManager.AD_UNIT_LESSON_END,
+                        onAdDismissed = completeLessonAction
+                    )
+                } else {
+                    completeLessonAction()
+                }
+            },
+            onExit = {
+                runningLesson = null
+            }
+        )
+        return
+    }
 
     if (userProfile.isBanned) {
         Box(
@@ -111,10 +155,13 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "🦁",
-                    fontSize = 80.sp,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                Icon(
+                    imageVector = Icons.Default.Block,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .padding(bottom = 16.dp)
                 )
                 Text(
                     text = if (isArabic) "الحساب موقوف" else "Account Suspended",
@@ -162,6 +209,7 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                                     (screen == Screen.Categories && currentRoute?.startsWith("word_list") == true)
 
                             val activeColor = when (screen) {
+                                Screen.Path -> Color(0xFF2E7D32)
                                 Screen.Categories -> IzemBlue
                                 Screen.Quiz -> IzemOrange
                                 Screen.Profile -> IzemGold
@@ -208,16 +256,22 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                                         } else {
                                             navController.popBackStack(Screen.Categories.route, inclusive = false)
                                         }
+                                    } else if (screen == Screen.Path) {
+                                        if (currentRoute != Screen.Path.route) {
+                                            navController.navigate(Screen.Path.route) {
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    inclusive = (navController.graph.findStartDestination().route == Screen.Path.route)
+                                                }
+                                                launchSingleTop = true
+                                            }
+                                        }
                                     } else {
-                                        val isLearnTab = screen == Screen.Categories
-
                                         navController.navigate(screen.route) {
                                             popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = !isLearnTab
+                                                saveState = true
                                             }
-
                                             launchSingleTop = true
-                                            restoreState = !isLearnTab
+                                            restoreState = true
                                         }
                                     }
                                 }
@@ -241,6 +295,21 @@ fun MainScreen(viewModel: AppViewModel = hiltViewModel()) {
                     enterTransition = { fadeIn() + scaleIn(initialScale = 0.98f) },
                     exitTransition = { fadeOut() }
                 ) {
+                    composable(Screen.Path.route) {
+                        LearningPathScreen(
+                            isArabic = isArabic,
+                            totalXP = userProfile.totalXP,
+                            streakDays = userProfile.learningDays,
+                            categories = categories,
+                            allWords = allWords,
+                            phrases = phrases,
+                            completedLessons = completedLessons,
+                            onStartLesson = { lesson ->
+                                runningLesson = lesson
+                            }
+                        )
+                    }
+
                     composable(Screen.Categories.route) {
                         CategoryScreen(
                             categoriesList = categories,

@@ -13,7 +13,6 @@ import com.relyvo.izem.model.Suggestion
 import com.relyvo.izem.model.UserProfile
 import com.relyvo.izem.model.Verb
 import com.relyvo.izem.model.Word
-// استيراد نماذج الاختبار من مجلد الـ model
 import com.relyvo.izem.model.QuizQuestion
 import com.relyvo.izem.model.QuizUiState
 import com.relyvo.izem.model.IndexedLetter
@@ -21,6 +20,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -82,6 +82,9 @@ class AppViewModel @Inject constructor(
     private val _isLeaderboardLoading = MutableStateFlow(true)
     val isLeaderboardLoading = _isLeaderboardLoading.asStateFlow()
 
+    private val _completedLessons = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val completedLessons = _completedLessons.asStateFlow()
+
     private var leaderboardListener: ListenerRegistration? = null
 
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
@@ -91,6 +94,29 @@ class AppViewModel @Inject constructor(
 
         viewModelScope.launch {
             settingsRepo.isArabic.collect { _isArabic.value = it }
+        }
+
+        viewModelScope.launch {
+            combine(settingsRepo.completedLessons, _userProfile) { localLessons, profile ->
+                localLessons to profile
+            }.collect { (localLessons, profile) ->
+                val userId = currentUserId
+                if (userId != null && localLessons.isNotEmpty()) {
+                    localLessons.forEach { (lessonId, stars) ->
+                        val remoteStars = profile.completedLessons[lessonId] ?: 0
+                        if (stars > remoteStars) {
+                            repo.saveLessonProgress(userId, lessonId, stars)
+                        }
+                    }
+                }
+
+                val merged = HashMap(profile.completedLessons)
+                localLessons.forEach { (lessonId, stars) ->
+                    val cur = merged[lessonId] ?: 0
+                    if (stars > cur) merged[lessonId] = stars
+                }
+                _completedLessons.value = merged
+            }
         }
 
         repo.listenCategories { _categories.value = it }
@@ -430,13 +456,42 @@ class AppViewModel @Inject constructor(
         repo.updateActiveDays(userId)
     }
 
-    private fun generateDynamicQuiz(allWords: List<Word>): List<QuizQuestion> {
-        if (allWords.size < 4) return emptyList()
+    fun recordLessonCompletion(xpGained: Int) {
+        val userId = currentUserId ?: return
+        val currentWeek = SimpleDateFormat("yyyy-'W'ww", Locale.UK).format(Date())
+        if (xpGained > 0) {
+            repo.updateUserProgress(userId, xpGained, currentWeek) { newTotalXp ->
+                val newLevel = when {
+                    newTotalXp >= 5000 -> "level_4"
+                    newTotalXp >= 1500 -> "level_3"
+                    newTotalXp >= 300  -> "level_2"
+                    else -> "level_1"
+                }
+                repo.updateUserLevel(userId, newLevel)
+            }
+        }
+        repo.updateActiveDays(userId)
+    }
 
-        val quizWords = allWords.shuffled().take(10)
+    fun onLessonCompleted(lessonId: String, starsEarned: Int, xpGained: Int) {
+        val userId = currentUserId
+        if (userId != null) {
+            repo.saveLessonProgress(userId, lessonId, starsEarned)
+        }
+        viewModelScope.launch {
+            settingsRepo.saveLessonProgress(lessonId, starsEarned)
+        }
+        recordLessonCompletion(xpGained)
+    }
+
+    private fun generateDynamicQuiz(allWords: List<Word>): List<QuizQuestion> {
+        val quizPool = allWords.filter { it.categoryId != "alphabet" }
+        if (quizPool.size < 4) return emptyList()
+
+        val quizWords = quizPool.shuffled().take(10)
 
         return quizWords.map { currentWord ->
-            val incorrectOptions = allWords
+            val incorrectOptions = quizPool
                 .filter { it.id != currentWord.id }
                 .shuffled()
                 .take(3)

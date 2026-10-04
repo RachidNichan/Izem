@@ -74,7 +74,7 @@ class FirestoreRepo {
                 if (snapshot != null) {
                     val list = snapshot.documents.mapNotNull { doc ->
                         doc.toObject<Word>()?.copy(id = doc.id)
-                    }.filter { it.categoryId != "alphabet" }
+                    }
 
                     onResult(list)
                 }
@@ -145,10 +145,46 @@ class FirestoreRepo {
                 }
 
                 if (snapshot != null && snapshot.exists()) {
-                    val profile = snapshot.toObject<UserProfile>()?.copy(userId = snapshot.id)
-                    onResult(profile ?: UserProfile(userId = userId))
+                    val rawMap = snapshot.get("completedLessons") as? Map<*, *>
+                    val parsedLessons = rawMap?.mapNotNull { (k, v) ->
+                        val key = k as? String
+                        val stars = (v as? Number)?.toInt() ?: 3
+                        if (key != null) key to stars else null
+                    }?.toMap() ?: emptyMap()
+
+                    val profile = snapshot.toObject<UserProfile>()?.copy(
+                        userId = snapshot.id,
+                        completedLessons = parsedLessons
+                    )
+                    android.util.Log.d("IzemFirestore", "UserProfile loaded: ${profile?.displayName}, completedLessons count: ${parsedLessons.size}, lessons: $parsedLessons")
+                    onResult(profile ?: UserProfile(userId = userId, completedLessons = parsedLessons))
                 } else {
+                    android.util.Log.d("IzemFirestore", "UserProfile document not found for $userId")
                     onResult(UserProfile(userId = userId))
+                }
+            }
+    }
+
+    fun saveLessonProgress(userId: String, lessonId: String, stars: Int) {
+        val userRef = db.collection("users").document(userId)
+        val fieldPath = "completedLessons.$lessonId"
+
+        userRef.update(fieldPath, stars, "lastActive", Timestamp.now())
+            .addOnSuccessListener {
+                android.util.Log.d("IzemFirestore", "Successfully updated lesson progress: $lessonId = $stars for $userId")
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.w("IzemFirestore", "Field update failed (${e.message}), attempting merge set...", e)
+                userRef.set(
+                    hashMapOf(
+                        "completedLessons" to hashMapOf(lessonId to stars),
+                        "lastActive" to Timestamp.now()
+                    ),
+                    SetOptions.merge()
+                ).addOnSuccessListener {
+                    android.util.Log.d("IzemFirestore", "Successfully merged lesson progress: $lessonId = $stars for $userId")
+                }.addOnFailureListener { mergeError ->
+                    android.util.Log.e("IzemFirestore", "Failed to save lesson progress: ${mergeError.message}", mergeError)
                 }
             }
     }
