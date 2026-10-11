@@ -87,5 +87,6 @@ data class MatchPairItem(
     val id: String,
     val amazigh: String,
     val tifinagh: String,
-    val translation: String
+    val translation: String,
+    val audioUrl: String = ""
 )

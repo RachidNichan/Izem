@@ -409,7 +409,8 @@ object CurriculumData {
                     id = w.id.ifEmpty { w.tamazight },
                     amazigh = "${w.tamazight} (${w.tifinagh})",
                     tifinagh = w.tifinagh,
-                    translation = if (isArabic) w.arabic.ifEmpty { w.english } else w.english.ifEmpty { w.arabic }
+                    translation = if (isArabic) w.arabic.ifEmpty { w.english } else w.english.ifEmpty { w.arabic },
+                    audioUrl = w.audioUrl
                 )
             }
             steps.add(

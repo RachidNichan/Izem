@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,10 +26,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import com.relyvo.izem.R
 import com.relyvo.izem.model.curriculum.ExerciseStep
 import com.relyvo.izem.model.curriculum.Lesson
 import com.relyvo.izem.model.curriculum.MatchPairItem
 import com.relyvo.izem.utils.InterstitialAdManager
+import com.relyvo.izem.utils.SmartAudioPlayer
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +51,12 @@ fun LessonRunnerScreen(
     var stepIndex by remember { mutableStateOf(0) }
     var mistakesCount by remember { mutableStateOf(0) }
     var isLessonFinished by remember { mutableStateOf(false) }
+
+    DisposableEffect(stepIndex) {
+        onDispose {
+            SmartAudioPlayer.stopAudio()
+        }
+    }
 
     val currentStep = lesson.steps.getOrNull(stepIndex)
     val progress = if (lesson.steps.isNotEmpty()) {
@@ -85,7 +95,10 @@ fun LessonRunnerScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onExit) {
+                    IconButton(onClick = {
+                        SmartAudioPlayer.stopAudio()
+                        onExit()
+                    }) {
                         Icon(imageVector = Icons.Default.Close, contentDescription = "Exit")
                     }
                 },
@@ -202,6 +215,16 @@ private fun IntroduceCardView(
     isArabic: Boolean,
     onNext: () -> Unit
 ) {
+    val context = LocalContext.current
+    val audioUrl = step.word?.audioUrl ?: step.phrase?.audioUrl ?: ""
+    val wordId = step.word?.id ?: step.phrase?.id ?: ""
+
+    LaunchedEffect(step.id) {
+        if (audioUrl.isNotBlank()) {
+            SmartAudioPlayer.playAudio(context, audioUrl, wordId)
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -258,6 +281,23 @@ private fun IntroduceCardView(
                 color = Color.Gray
             )
 
+            if (audioUrl.isNotBlank()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                FilledTonalIconButton(
+                    onClick = {
+                        SmartAudioPlayer.playAudio(context, audioUrl, wordId)
+                    },
+                    modifier = Modifier.size(54.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "Pronounce",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
             val tip = if (isArabic) step.academicTipAr else step.academicTipEn
             if (tip.isNotBlank()) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -289,7 +329,10 @@ private fun IntroduceCardView(
         }
 
         Button(
-            onClick = onNext,
+            onClick = {
+                SmartAudioPlayer.stopAudio()
+                onNext()
+            },
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
@@ -314,6 +357,8 @@ private fun MultipleChoiceView(
     onAnswerChecked: (Boolean) -> Unit,
     onNext: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var selectedOption by remember(step.id) { mutableStateOf<String?>(null) }
     var isSubmitted by remember(step.id) { mutableStateOf(false) }
     val isCorrect = selectedOption == step.correctAnswer
@@ -323,11 +368,32 @@ private fun MultipleChoiceView(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = step.prompt,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = step.prompt,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                if (step.promptAudioUrl.isNotBlank()) {
+                    IconButton(
+                        onClick = {
+                            SmartAudioPlayer.playAudio(context, step.promptAudioUrl, step.id)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Listen",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
             if (step.promptSubtext.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -403,7 +469,19 @@ private fun MultipleChoiceView(
                     if (!isSubmitted) {
                         isSubmitted = true
                         onAnswerChecked(isCorrect)
+                        if (isCorrect) {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.correct)
+                            if (step.promptAudioUrl.isNotBlank()) {
+                                coroutineScope.launch {
+                                    delay(400)
+                                    SmartAudioPlayer.playAudio(context, step.promptAudioUrl, step.id)
+                                }
+                            }
+                        } else {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.wrong)
+                        }
                     } else {
+                        SmartAudioPlayer.stopAudio()
                         onNext()
                     }
                 },
@@ -434,6 +512,8 @@ private fun AssembleSentenceView(
     onAnswerChecked: (Boolean) -> Unit,
     onNext: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val selectedTokens = remember(step.id) { mutableStateListOf<String>() }
     val availableTokens = remember(step.id) { mutableStateListOf(*step.scrambledTokens.toTypedArray()) }
     var isSubmitted by remember(step.id) { mutableStateOf(false) }
@@ -445,17 +525,39 @@ private fun AssembleSentenceView(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                text = if (isArabic) "ركب هذه الجملة:" else "Translate this sentence:",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.Gray
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = if (isArabic) step.promptTranslationAr else step.promptTranslationEn,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (isArabic) "ركب هذه الجملة:" else "Translate this sentence:",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = if (isArabic) step.promptTranslationAr else step.promptTranslationEn,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                if (step.audioUrl.isNotBlank()) {
+                    IconButton(
+                        onClick = {
+                            SmartAudioPlayer.playAudio(context, step.audioUrl, step.id)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Listen",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -545,7 +647,19 @@ private fun AssembleSentenceView(
                     if (!isSubmitted) {
                         isSubmitted = true
                         onAnswerChecked(isCorrect)
+                        if (isCorrect) {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.correct)
+                            if (step.audioUrl.isNotBlank()) {
+                                coroutineScope.launch {
+                                    delay(400)
+                                    SmartAudioPlayer.playAudio(context, step.audioUrl, step.id)
+                                }
+                            }
+                        } else {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.wrong)
+                        }
                     } else {
+                        SmartAudioPlayer.stopAudio()
                         onNext()
                     }
                 },
@@ -576,6 +690,8 @@ private fun SpellingStepView(
     onAnswerChecked: (Boolean) -> Unit,
     onNext: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val guessedChars = remember(step.id) { mutableStateListOf<String>() }
     val availableChars = remember(step.id) { mutableStateListOf(*step.scrambledLetters.toTypedArray()) }
     var isSubmitted by remember(step.id) { mutableStateOf(false) }
@@ -598,11 +714,31 @@ private fun SpellingStepView(
                 color = Color.Gray
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${step.word.tamazight} (${if (isArabic) step.word.arabic else step.word.english})",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "${step.word.tamazight} (${if (isArabic) step.word.arabic else step.word.english})",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                if (step.word.audioUrl.isNotBlank()) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {
+                            SmartAudioPlayer.playAudio(context, step.word.audioUrl, step.word.id)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "Listen",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(28.dp))
 
@@ -695,7 +831,19 @@ private fun SpellingStepView(
                     if (!isSubmitted) {
                         isSubmitted = true
                         onAnswerChecked(isCorrect)
+                        if (isCorrect) {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.correct)
+                            if (step.word.audioUrl.isNotBlank()) {
+                                coroutineScope.launch {
+                                    delay(400)
+                                    SmartAudioPlayer.playAudio(context, step.word.audioUrl, step.word.id)
+                                }
+                            }
+                        } else {
+                            SmartAudioPlayer.playRawAudio(context, R.raw.wrong)
+                        }
                     } else {
+                        SmartAudioPlayer.stopAudio()
                         onNext()
                     }
                 },
@@ -724,6 +872,7 @@ private fun MatchPairsStepView(
     isArabic: Boolean,
     onCompleted: () -> Unit
 ) {
+    val context = LocalContext.current
     var selectedAmazigh by remember { mutableStateOf<String?>(null) }
     var selectedTranslation by remember { mutableStateOf<String?>(null) }
     val solvedPairIds = remember { mutableStateListOf<String>() }
@@ -735,6 +884,13 @@ private fun MatchPairsStepView(
             val match = step.pairs.find { it.amazigh == am && it.translation == tr }
             if (match != null) {
                 solvedPairIds.add(match.id)
+                SmartAudioPlayer.playRawAudio(context, R.raw.correct)
+                if (match.audioUrl.isNotBlank()) {
+                    delay(300)
+                    SmartAudioPlayer.playAudio(context, match.audioUrl, match.id)
+                }
+            } else {
+                SmartAudioPlayer.playRawAudio(context, R.raw.wrong)
             }
             selectedAmazigh = null
             selectedTranslation = null
@@ -758,6 +914,8 @@ private fun MatchPairsStepView(
 
             step.pairs.forEach { item ->
                 val isSolved = solvedPairIds.contains(item.id)
+                val displayAmazigh = if (item.amazigh.contains(item.tifinagh)) item.amazigh else "${item.amazigh} (${item.tifinagh})"
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -777,13 +935,31 @@ private fun MatchPairsStepView(
                         border = if (selectedAmazigh == item.amazigh) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(
-                            text = "${item.amazigh} (${item.tifinagh})",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (isSolved) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             modifier = Modifier.padding(14.dp)
-                        )
+                        ) {
+                            Text(
+                                text = displayAmazigh,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (isSolved) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (item.audioUrl.isNotBlank() && !isSolved) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                    contentDescription = "Audio",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .clickable {
+                                            SmartAudioPlayer.playAudio(context, item.audioUrl, item.id)
+                                        }
+                                )
+                            }
+                        }
                     }
 
                     // Right column: Translation
@@ -812,7 +988,10 @@ private fun MatchPairsStepView(
         }
 
         Button(
-            onClick = onCompleted,
+            onClick = {
+                SmartAudioPlayer.stopAudio()
+                onCompleted()
+            },
             enabled = isAllSolved,
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
@@ -838,6 +1017,11 @@ private fun LessonCompleteCard(
     isArabic: Boolean,
     onContinue: () -> Unit
 ) {
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        SmartAudioPlayer.playRawAudio(context, R.raw.quiz_victory)
+    }
+
     val stars = when (mistakes) {
         0 -> 3
         1 -> 2
@@ -910,7 +1094,10 @@ private fun LessonCompleteCard(
         Spacer(modifier = Modifier.height(36.dp))
 
         Button(
-            onClick = onContinue,
+            onClick = {
+                SmartAudioPlayer.stopAudio()
+                onContinue()
+            },
             shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
